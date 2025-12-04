@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Lion Lingo - English for Kids",
+  "description": "A fun app for Chinese kids to learn English with IPA, translations, and AI chat.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
