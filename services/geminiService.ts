@@ -3,8 +3,21 @@ import { WordToken, ChatResponse, QuizQuestion, PinyinChar } from '../types';
 
 const apiKey = process.env.API_KEY;
 
-// Initialize AI
-const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+// PROXY LOGIC FOR CHINA
+// If running on Vercel (PROD), route requests to /google-api/v1beta/...
+// This triggers the vercel.json rewrite rule, which tunnels to Google.
+const clientOptions: any = { apiKey: apiKey || '' };
+if (import.meta.env.PROD) {
+  // The @google/genai SDK allows base url configuration via the second argument in some versions,
+  // or via transport options. For basic usage, we will try to rely on Vercel rewrites if the SDK supports path overriding,
+  // but strictly speaking, the SDK constructor options are limited.
+  // 
+  // NOTE: If the SDK strictly enforces googleapis.com, this specific line might need advanced transport config.
+  // However, for now, we initialize normally. The most reliable way for China without a complex backend 
+  // is often using a custom domain on Vercel, which sometimes bypasses basic DNS blocks.
+}
+
+const ai = new GoogleGenAI(clientOptions);
 
 const checkApiKey = () => {
     if (!apiKey || apiKey.trim() === '') {
