@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Volume2, Paperclip, Loader2, Image as ImageIcon, Camera } from 'lucide-react';
-import { chatWithLion, generateSpeech, extractTextFromFile } from '../services/geminiService';
+import { chatWithLion, generateSpeech, extractTextFromFileRef } from '../services/geminiService';
 import { playPCM, stopAudio, calculateWeightedActiveIndexForTokens } from '../utils/audio';
 import WordCard from './WordCard';
 
@@ -104,7 +104,7 @@ const ChatInterface: React.FC = () => {
                  contentToSend = input || "I uploaded a picture. What is this?";
             } else {
                  // Extract text
-                 const text = await extractTextFromFile(file);
+                 const text = await extractTextFromFileRef(file);
                  contentToSend = `[File Content from ${file.name}]:\n${text}\n\n${input}`;
                  attachment = { type: 'file', content: 'Document uploaded', name: file.name };
             }
@@ -159,8 +159,8 @@ const ChatInterface: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50 relative pb-20">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex flex-col h-full bg-slate-50 relative">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-48">
                 {messages.map(m => (
                     <div key={m.id} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[90%] p-3 rounded-2xl ${m.sender === 'user' ? 'bg-blue-500 text-white' : 'bg-white border-2 border-blue-100'}`}>
@@ -196,11 +196,12 @@ const ChatInterface: React.FC = () => {
                 {loading && <div className="text-center text-gray-400 flex justify-center gap-2"><Loader2 className="animate-spin"/> Teacher Lion is thinking...</div>}
             </div>
             
-            <div className="absolute bottom-0 left-0 right-0 p-3 bg-white border-t flex items-center gap-2">
-                <button onClick={() => cameraInputRef.current?.click()} className="p-3 text-gray-400 hover:text-blue-500 bg-gray-100 rounded-full">
+            {/* Input Area - Moved up to bottom-28 to clear the navigation dock */}
+            <div className="absolute bottom-28 left-4 right-4 bg-white/90 backdrop-blur-sm p-2 rounded-[2rem] shadow-xl border border-blue-100 flex items-center gap-2 z-20">
+                <button onClick={() => cameraInputRef.current?.click()} className="p-3 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-full transition-colors">
                     <Camera size={20}/>
                 </button>
-                <button onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-400 hover:text-blue-500 bg-gray-100 rounded-full">
+                <button onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-400 hover:text-blue-500 bg-gray-50 rounded-full transition-colors">
                     <Paperclip size={20}/>
                 </button>
                 <input 
@@ -223,14 +224,14 @@ const ChatInterface: React.FC = () => {
                     value={input} 
                     onChange={e => setInput(e.target.value)} 
                     onKeyDown={e => e.key === 'Enter' && handleSend()}
-                    className="flex-1 bg-gray-100 rounded-full px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300" 
+                    className="flex-1 bg-gray-100 rounded-full px-4 py-3 outline-none focus:ring-2 focus:ring-blue-300 font-medium" 
                     placeholder="Say something..." 
                 />
                 
                 {input ? (
-                    <button onClick={() => handleSend()} className="p-3 bg-blue-500 text-white rounded-full"><Send size={20}/></button>
+                    <button onClick={() => handleSend()} className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg shadow-blue-200"><Send size={20}/></button>
                 ) : (
-                    <button onClick={startListening} className={`p-3 rounded-full ${listening ? 'bg-red-500 animate-pulse text-white' : 'bg-gray-200 text-gray-600'}`}>
+                    <button onClick={startListening} className={`p-3 rounded-full transition-all ${listening ? 'bg-red-500 animate-pulse text-white shadow-lg shadow-red-200' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'}`}>
                         <Mic size={20}/>
                     </button>
                 )}
