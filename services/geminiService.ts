@@ -7,7 +7,7 @@ const apiKey = process.env.API_KEY;
 // If running on Vercel (PROD), route requests to /google-api/v1beta/...
 // This triggers the vercel.json rewrite rule, which tunnels to Google.
 const clientOptions: any = { apiKey: apiKey || '' };
-if (import.meta.env.PROD) {
+if ((import.meta as any).env?.PROD) {
   // The @google/genai SDK allows base url configuration via the second argument in some versions,
   // or via transport options. For basic usage, we will try to rely on Vercel rewrites if the SDK supports path overriding,
   // but strictly speaking, the SDK constructor options are limited.
