@@ -5,25 +5,35 @@ const apiKey = process.env.API_KEY;
 
 // PROXY LOGIC FOR CHINA
 // If running on Vercel (PROD), route requests to /google-api/v1beta/...
-// This triggers the vercel.json rewrite rule, which tunnels to Google.
 const clientOptions: any = { apiKey: apiKey || '' };
 if ((import.meta as any).env?.PROD) {
-  // The @google/genai SDK allows base url configuration via the second argument in some versions,
-  // or via transport options. For basic usage, we will try to rely on Vercel rewrites if the SDK supports path overriding,
-  // but strictly speaking, the SDK constructor options are limited.
-  // 
-  // NOTE: If the SDK strictly enforces googleapis.com, this specific line might need advanced transport config.
-  // However, for now, we initialize normally. The most reliable way for China without a complex backend 
-  // is often using a custom domain on Vercel, which sometimes bypasses basic DNS blocks.
+  // Using Vercel rewrite proxy
+  // The SDK might default to googleapis.com, but Vercel rewrites handle /google-api
+  // We configure the custom endpoint if supported or rely on the rewrite matching
 }
 
-const ai = new GoogleGenAI(clientOptions);
+// In the specific case of @google/genai, we initialize with just the key. 
+// For China proxy to work via Vercel rewrites, we ideally need to point the baseUrl.
+// Since the library might not expose baseUrl easily in constructor, we assume the Vercel rewrite 
+// catches specific route patterns if configured, or we rely on standard behavior.
+// To explicitly force the proxy path in this specific codebase context:
+const ai = new GoogleGenAI({ 
+    apiKey: apiKey || '', 
+    baseUrl: (import.meta as any).env?.PROD ? '/google-api' : undefined 
+} as any);
 
 const checkApiKey = () => {
     if (!apiKey || apiKey.trim() === '') {
         throw new Error("API Key is missing. Please add it in Vercel Settings.");
     }
 };
+
+export const AVAILABLE_VOICES = [
+  { id: 'Fenrir', name: 'Teacher Lion', gender: 'Male', style: 'Calm & Deep' },
+  { id: 'Kore', name: 'Teacher Lily', gender: 'Female', style: 'Warm & Gentle' },
+  { id: 'Puck', name: 'Teacher Jack', gender: 'Male', style: 'Energetic & Fun' },
+  { id: 'Aoede', name: 'Teacher Rose', gender: 'Female', style: 'Soft & Sweet' },
+];
 
 const quizSchema: Schema = {
   type: Type.ARRAY,
@@ -98,7 +108,6 @@ const processChunkWithRetries = async (chunk: string, index: number): Promise<Wo
             throw new Error("Empty result");
         } catch (e: any) {
             console.error(`Error chunk ${index}:`, e);
-            // Only delay on error
             await delay(1000 + (retryCount * 1000));
             retryCount++;
         }
@@ -156,7 +165,6 @@ export const convertLargeTextToTokens = async (text: string, onProgress?: (perce
 
     const chunks = [];
     let currentText = text;
-    // Increased chunk size for speed (English tokens use fewer AI tokens than Chinese logic)
     while(currentText.length > 0) {
         let split = currentText.length > 3000 ? currentText.lastIndexOf('.', 3000) + 1 : currentText.length;
         if(split <= 0) split = 3000;
@@ -165,7 +173,6 @@ export const convertLargeTextToTokens = async (text: string, onProgress?: (perce
     }
 
     let combinedResult: WordToken[] = [];
-    // Increased batch size for parallelism
     const BATCH_SIZE = 3; 
     
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
@@ -312,12 +319,15 @@ export const generateQuiz = async (topic: string): Promise<QuizQuestion[]> => {
 export const generateSpeech = async (text: string, style: 'speech' | 'song' = 'speech'): Promise<string | null> => {
     checkApiKey();
     try {
+        // Use user preference from localStorage, default to Fenrir
+        const savedVoice = localStorage.getItem('lingo_voice') || 'Fenrir';
+        
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-preview-tts',
             contents: { parts: [{ text: text.substring(0, 4500) }] },
             config: {
                 responseModalities: [Modality.AUDIO],
-                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Fenrir' } } }
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: savedVoice } } }
             }
         });
         return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;

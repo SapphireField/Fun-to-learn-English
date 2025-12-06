@@ -42,7 +42,7 @@ const FlashcardMode: React.FC<FlashcardModeProps> = ({ words, onClose }) => {
 
   // Auto-play audio when showing a new card (front side)
   useEffect(() => {
-    if (!isComplete) {
+    if (!isComplete && currentWord) {
         // Small delay to allow transition
         const timer = setTimeout(() => {
             handlePlayAudio();
@@ -150,15 +150,15 @@ const FlashcardMode: React.FC<FlashcardModeProps> = ({ words, onClose }) => {
                     >
                         {audioLoading ? <Loader2 className="animate-spin" size={24} /> : <Volume2 size={24} />}
                     </button>
-                    <h2 className="text-4xl font-black text-gray-800 english-font text-center mb-2">{currentWord.word}</h2>
+                    <h2 className="text-4xl font-black text-gray-800 english-font text-center mb-2">{currentWord?.word}</h2>
                     <p className="text-gray-400 text-sm animate-pulse">Tap to flip</p>
                 </div>
 
                 {/* Back Side (Translation) */}
                 <div className="absolute w-full h-full bg-blue-50 rounded-3xl shadow-2xl backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 border-b-8 border-yellow-400">
-                    <h3 className="text-4xl font-bold text-blue-600 chinese-font mb-2">{currentWord.translation}</h3>
+                    <h3 className="text-4xl font-bold text-blue-600 chinese-font mb-2">{currentWord?.translation}</h3>
                     <p className="text-xl text-gray-500 font-mono bg-white px-3 py-1 rounded-lg border border-blue-100">
-                        /{currentWord.ipa}/
+                        /{currentWord?.ipa}/
                     </p>
                 </div>
             </div>
