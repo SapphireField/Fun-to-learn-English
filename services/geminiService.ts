@@ -47,30 +47,20 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 const processChunkWithRetries = async (chunk: string, index: number): Promise<WordToken[]> => {
     let retryCount = 0;
-    while (retryCount < 5) {
+    while (retryCount < 3) {
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
                 contents: `
                 Task: Analyze this English text for a Chinese child learner.
-                
-                Input Text:
-                "${chunk}"
-
+                Input Text: "${chunk}"
                 Instructions:
                 1. Break text into words/tokens.
-                2. Return a PLAIN TEXT list.
-                3. Format: Word|IPA|ChineseMeaning
-                4. Rules:
-                   - IPA: Use standard IPA pronunciation symbols (e.g. /həˈloʊ/).
-                   - ChineseMeaning: Simple, short definition in Simplified Chinese (2-4 chars).
-                   - Punctuation: Just output the mark and empty fields (e.g. !||).
-                
-                Example Output:
-                Hello|/həˈloʊ/|你好
-                ,| |
-                World|/wɜːrld/|世界
-                !| |
+                2. Return a PLAIN TEXT list: Word|IPA|ChineseMeaning
+                3. Rules:
+                   - IPA: Use standard IPA.
+                   - ChineseMeaning: Simple, short definition (2-4 chars).
+                   - Punctuation: Just output mark and empty fields (e.g. !||).
                 `,
             });
         
@@ -78,11 +68,9 @@ const processChunkWithRetries = async (chunk: string, index: number): Promise<Wo
             if (textOutput) {
                 const lines = textOutput.split('\n');
                 const chunkResult: WordToken[] = [];
-                
                 for (const line of lines) {
                     const trimmedLine = line.trim();
                     if (!trimmedLine) continue;
-
                     const parts = trimmedLine.split('|');
                     if (parts.length >= 1) {
                         chunkResult.push({
@@ -97,10 +85,9 @@ const processChunkWithRetries = async (chunk: string, index: number): Promise<Wo
             throw new Error("Empty result");
         } catch (e: any) {
             console.error(`Error chunk ${index}:`, e);
-            let waitTime = 2000 * Math.pow(2, retryCount); 
-            if (e.toString().includes('429')) waitTime = 5000 + (retryCount * 2000);
+            // Only delay on error
+            await delay(1000 + (retryCount * 1000));
             retryCount++;
-            if (retryCount < 5) await delay(waitTime); 
         }
     }
     return chunk.split(' ').map(w => ({ word: w, ipa: '', translation: '' }));
@@ -108,7 +95,7 @@ const processChunkWithRetries = async (chunk: string, index: number): Promise<Wo
 
 const processPinyinChunk = async (chunk: string, index: number): Promise<PinyinChar[]> => {
     let retryCount = 0;
-    while (retryCount < 5) {
+    while (retryCount < 3) {
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash',
@@ -117,11 +104,8 @@ const processPinyinChunk = async (chunk: string, index: number): Promise<PinyinC
                 Input: "${chunk}"
                 Instructions:
                 1. Break into characters.
-                2. Return valid Pinyin for Chinese chars.
+                2. Return valid Pinyin.
                 3. Output Format: Char|Pinyin
-                Example:
-                你|nǐ
-                好|hǎo
                 `,
             });
              const textOutput = response.text;
@@ -141,10 +125,8 @@ const processPinyinChunk = async (chunk: string, index: number): Promise<PinyinC
              }
              throw new Error("Empty result");
         } catch (e: any) {
-             let waitTime = 2000 * Math.pow(2, retryCount);
-             if (e.toString().includes('429')) waitTime = 5000 + (retryCount * 2000);
+             await delay(1000 + (retryCount * 1000));
              retryCount++;
-             if (retryCount < 5) await delay(waitTime);
         }
     }
     return chunk.split('').map(c => ({ char: c, pinyin: '' }));
@@ -161,15 +143,17 @@ export const convertLargeTextToTokens = async (text: string, onProgress?: (perce
 
     const chunks = [];
     let currentText = text;
+    // Increased chunk size for speed (English tokens use fewer AI tokens than Chinese logic)
     while(currentText.length > 0) {
-        let split = currentText.length > 2000 ? currentText.lastIndexOf('.', 2000) + 1 : currentText.length;
-        if(split <= 0) split = 2000;
+        let split = currentText.length > 3000 ? currentText.lastIndexOf('.', 3000) + 1 : currentText.length;
+        if(split <= 0) split = 3000;
         chunks.push(currentText.substring(0, split));
         currentText = currentText.substring(split);
     }
 
     let combinedResult: WordToken[] = [];
-    const BATCH_SIZE = 2;
+    // Increased batch size for parallelism
+    const BATCH_SIZE = 3; 
     
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
         const batch = chunks.slice(i, i + BATCH_SIZE);
@@ -195,8 +179,8 @@ export const convertLargeTextToPinyin = async (text: string, onProgress?: (perce
     const chunks = [];
     let currentText = text;
     while(currentText.length > 0) {
-        let split = currentText.length > 500 ? currentText.lastIndexOf('。', 500) + 1 : currentText.length;
-        if (split <= 0) split = 500;
+        let split = currentText.length > 2000 ? currentText.lastIndexOf('。', 2000) + 1 : currentText.length;
+        if (split <= 0) split = 2000;
         chunks.push(currentText.substring(0, split));
         currentText = currentText.substring(split);
     }
@@ -218,7 +202,6 @@ export const convertLargeTextToPinyin = async (text: string, onProgress?: (perce
 
 export const extractTextFromFile = async (file: File): Promise<string> => {
     try {
-      // Images
       if (file.type.startsWith('image/')) {
          return new Promise((resolve, reject) => {
              const reader = new FileReader();
@@ -242,7 +225,6 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
          });
       }
       
-      // Word Docs
       if (file.type.includes('wordprocessingml')) {
           if ((window as any).mammoth) {
               const arrayBuffer = await file.arrayBuffer();
@@ -251,14 +233,10 @@ export const extractTextFromFile = async (file: File): Promise<string> => {
           }
       }
       
-      // EPUB (Simple extraction)
       if (file.type.includes('epub')) {
-           // Basic fallback for now, real EPUB parsing is complex
-           // Using previous logic:
            return "EPUB reading is supported in the full tool.";
       }
 
-      // Plain Text
       return new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => resolve(e.target?.result as string || "");
@@ -288,29 +266,19 @@ export const chatWithLion = async (message: string, history: any[], image?: {dat
 
     const prompt = `
       You are "Teacher Lion", a fun English tutor for Chinese children.
-      
-      Instructions:
-      1. Analyze the user input (and image if provided).
-      2. Respond in simple, clear English suitable for a child.
-      3. If the user sends an image or text file content, explain what is in it in simple English, then ask a fun question about it.
-      4. If you use a difficult word, explain it in (brackets) in Chinese.
-      5. Your goal is to encourage them to speak English.
-      
+      Input: "${message}" (or image).
       Output JSON:
       {
-          "english": "Your full english response.",
-          "chinese": "A Chinese translation of your response.",
-          "aligned": [Array of {word, ipa, translation} tokens for your English response]
+          "english": "Your simple English response.",
+          "chinese": "Chinese translation.",
+          "aligned": [Array of {word, ipa, translation}]
       }
     `;
 
-    // Construct request
-    // Note: To simplify for this specific structure, we are sending current message + prompt instructions. 
-    // Ideally, we'd use 'chats.create', but for single-turn JSON response with history context passed in prompt, this works well.
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: [
-            { role: 'user', parts: [{ text: `Previous Context: ${historyPrompt}` }] },
+            { role: 'user', parts: [{ text: `History: ${historyPrompt}` }] },
             { role: 'user', parts: [...parts, { text: prompt }] }
         ],
         config: { responseMimeType: "application/json" }
@@ -322,10 +290,7 @@ export const generateQuiz = async (topic: string): Promise<QuizQuestion[]> => {
     checkApiKey();
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Generate 5 multiple choice questions for a Chinese child learning English. Topic: ${topic}.
-        Test English vocabulary.
-        If the question text contains Chinese, include 'pinyin' property.
-        Output JSON.`,
+        contents: `Generate 5 English vocab MCQ for kids. Topic: ${topic}. Output JSON.`,
         config: { responseMimeType: "application/json", responseSchema: quizSchema }
     });
     return JSON.parse(response.text!) as QuizQuestion[];
@@ -350,10 +315,10 @@ export const getLibraryContent = async (title: string) => {
     checkApiKey();
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Find or write an English children's story or nursery rhyme with the title or topic: "${title}". 
-        Return JSON: {title, chineseTitle, content (English), chineseTranslation, type}.
-        Type should be "rhyme" or "story".`,
+        contents: `Write English kid story/rhyme: "${title}". Return JSON {title, chineseTitle, content, chineseTranslation, type="rhyme"|"story"}.`,
         config: { responseMimeType: "application/json", responseSchema: libraryContentSchema }
     });
     return JSON.parse(response.text!);
 };
+
+export const extractTextFromFileRef = extractTextFromFile;

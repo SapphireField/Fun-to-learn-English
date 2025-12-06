@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Gamepad2, Star, RefreshCw, Trophy, Loader2, ArrowRight, CheckCircle2, XCircle, Volume2, Square } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Gamepad2, Star, RefreshCw, Trophy, Loader2, ArrowRight, CheckCircle2, XCircle, Volume2, Square, Home, Mic, Play } from 'lucide-react';
 import { generateQuiz, generateSpeech } from '../services/geminiService';
 import { playPCM, stopAudio } from '../utils/audio';
 import { QuizQuestion } from '../types';
-import ChineseChar from './ChineseChar';
 
-// Topics with Pinyin
+// Topics in English
 const TOPICS = [
-    { name: "动物", pinyin: "dòng wù", en: "Animals" },
-    { name: "颜色", pinyin: "yán sè", en: "Colors" },
-    { name: "数字", pinyin: "shù zì", en: "Numbers" },
-    { name: "家庭", pinyin: "jiā tíng", en: "Family" },
-    { name: "食物", pinyin: "shí wù", en: "Food" },
-    { name: "自然", pinyin: "zì rán", en: "Nature" },
-    { name: "问候", pinyin: "wèn hòu", en: "Greetings" },
-    { name: "学校", pinyin: "xué xiào", en: "School" }
+    { name: "Animals", icon: "🦁" },
+    { name: "Colors", icon: "🎨" },
+    { name: "Numbers", icon: "1️⃣" },
+    { name: "Family", icon: "👨‍👩‍👧" },
+    { name: "Food", icon: "🍎" },
+    { name: "Nature", icon: "🌳" },
+    { name: "Greetings", icon: "👋" },
+    { name: "School", icon: "🎒" }
 ];
 
 const GameMode: React.FC = () => {
@@ -28,6 +27,14 @@ const GameMode: React.FC = () => {
     const [topic, setTopic] = useState("Animals");
     const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
     
+    // Custom Topic State
+    const [customTopic, setCustomTopic] = useState("");
+    const [isTopicListening, setIsTopicListening] = useState(false);
+    
+    // Voice State (Game)
+    const [isListening, setIsListening] = useState(false);
+    const [voiceFeedback, setVoiceFeedback] = useState("");
+
     // Audio State
     const [audioLoadingId, setAudioLoadingId] = useState<string | null>(null);
     const [playingId, setPlayingId] = useState<string | null>(null);
@@ -62,6 +69,7 @@ const GameMode: React.FC = () => {
         if (selectedAnswer !== null) return; // Prevent multiple clicks
         stopAudio();
         setPlayingId(null);
+        setIsListening(false); // Stop listening if manual click
 
         setSelectedAnswer(index);
         const correct = index === questions[currentIndex].correctAnswer;
@@ -71,9 +79,73 @@ const GameMode: React.FC = () => {
         }
     };
 
+    const startTopicListening = () => {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("Speech recognition not supported in this browser.");
+            return;
+        }
+
+        const recognition = new (window as any).webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => setIsTopicListening(true);
+        recognition.onend = () => setIsTopicListening(false);
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            setCustomTopic(transcript);
+        };
+        
+        stopAudio();
+        recognition.start();
+    };
+
+    const startListening = () => {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("Speech recognition not supported in this browser.");
+            return;
+        }
+
+        const recognition = new (window as any).webkitSpeechRecognition();
+        recognition.lang = 'en-US'; // Listening for English answers
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            setIsListening(true);
+            setVoiceFeedback("Listening...");
+        };
+
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript.toLowerCase();
+            setVoiceFeedback(`I heard: "${transcript}"`);
+            
+            // fuzzy match the transcript to options
+            const currentOptions = questions[currentIndex].options;
+            const matchIndex = currentOptions.findIndex(opt => 
+                transcript.includes(opt.toLowerCase()) || opt.toLowerCase().includes(transcript)
+            );
+
+            if (matchIndex !== -1) {
+                handleAnswer(matchIndex);
+            } else {
+                setVoiceFeedback(`Try again! I didn't catch that.`);
+            }
+        };
+        
+        stopAudio(); // Stop TTS so it doesn't interfere with mic
+        recognition.start();
+    };
+
     const nextQuestion = () => {
         stopAudio();
         setPlayingId(null);
+        setVoiceFeedback("");
         if (currentIndex < questions.length - 1) {
             setCurrentIndex(currentIndex + 1);
             setSelectedAnswer(null);
@@ -102,13 +174,12 @@ const GameMode: React.FC = () => {
         setAudioLoadingId(id);
         
         try {
-            // Generate speech using the default speech style
             const base64Audio = await generateSpeech(text, 'speech');
             setAudioLoadingId(null);
 
             if (base64Audio) {
                 setPlayingId(id);
-                await playPCM(base64Audio, () => {}); // No need to track progress for simple buttons
+                await playPCM(base64Audio, () => {}); 
                 setPlayingId(null);
             }
         } catch (err) {
@@ -122,11 +193,10 @@ const GameMode: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center h-full p-4 bg-yellow-50">
                 <Loader2 size={64} className="text-yellow-500 animate-spin mb-4" />
-                <h2 className="text-3xl font-bold text-gray-700 animate-pulse flex flex-col items-center">
-                    <span className="text-orange-500 text-lg mb-1">zhǔn bèi zhòng...</span>
-                    准备中...
+                <h2 className="text-3xl font-bold text-gray-700 animate-pulse english-font">
+                    Getting Ready...
                 </h2>
-                <p className="text-gray-500 mt-2">Teacher Panda is thinking!</p>
+                <p className="text-gray-500 mt-2">Teacher Lion is thinking!</p>
             </div>
         );
     }
@@ -141,8 +211,7 @@ const GameMode: React.FC = () => {
                      </div>
                 </div>
                 
-                <h2 className="text-4xl font-black text-gray-800 mb-1 fun-font">太棒了!</h2>
-                <p className="text-orange-500 font-bold mb-4">tài bàng le!</p>
+                <h2 className="text-4xl font-black text-gray-800 mb-2 fun-font">Awesome!</h2>
                 
                 <p className="text-xl text-gray-600 mb-6">You scored {score} out of {questions.length}!</p>
                 
@@ -154,17 +223,15 @@ const GameMode: React.FC = () => {
                 <div className="flex gap-4 w-full max-w-sm">
                     <button 
                         onClick={() => startGame(topic)}
-                        className="flex-1 py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-md hover:bg-orange-600 transition-all active:scale-95 flex flex-col items-center justify-center"
+                        className="flex-1 py-4 bg-orange-500 text-white rounded-2xl font-bold shadow-md hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center"
                     >
-                        <span className="text-xs text-orange-100 mb-0.5">zài wán yí cì</span>
-                        <span className="flex items-center"><RefreshCw className="mr-2" size={18} /> 再玩一次</span>
+                        <RefreshCw className="mr-2" size={20} /> Play Again
                     </button>
                     <button 
                         onClick={quitGame}
-                        className="flex-1 py-4 bg-white text-gray-600 border-2 border-gray-200 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 flex flex-col items-center justify-center"
+                        className="flex-1 py-4 bg-white text-gray-600 border-2 border-gray-200 rounded-2xl font-bold hover:bg-gray-50 transition-all active:scale-95 flex items-center justify-center"
                     >
-                        <span className="text-xs text-gray-400 mb-0.5">cài dān</span>
-                        <span>菜单 (Menu)</span>
+                         <Home className="mr-2" size={20} /> Menu
                     </button>
                 </div>
             </div>
@@ -177,15 +244,14 @@ const GameMode: React.FC = () => {
         return (
             <div className="flex flex-col h-full p-4 bg-yellow-50 max-w-md mx-auto relative overflow-hidden">
                 <div className="flex justify-between items-center mb-6 z-10">
-                     <button onClick={quitGame} className="text-gray-400 hover:text-gray-600 font-bold text-sm flex flex-col items-start">
-                        <span className="text-[10px]">tuì chū</span>
-                        <span>退出</span>
+                     <button onClick={quitGame} className="text-gray-400 hover:text-gray-600 font-bold text-sm flex items-center bg-white px-3 py-1 rounded-full shadow-sm">
+                        <XCircle size={16} className="mr-1"/> Exit
                      </button>
                      <div className="bg-white px-4 py-1 rounded-full shadow-sm text-sm font-bold text-yellow-600 border border-yellow-200">
                          {currentIndex + 1} / {questions.length}
                      </div>
-                     <div className="flex items-center text-orange-500 font-bold">
-                         <Star size={18} className="mr-1 fill-current" /> {score}
+                     <div className="flex items-center text-orange-500 font-bold bg-white px-3 py-1 rounded-full shadow-sm">
+                         <Star size={16} className="mr-1 fill-current" /> {score}
                      </div>
                 </div>
 
@@ -197,7 +263,7 @@ const GameMode: React.FC = () => {
                     ></div>
                 </div>
 
-                <div className="flex-1 flex flex-col justify-center z-10">
+                <div className="flex-1 flex flex-col justify-center z-10 pb-20">
                     <div className="bg-white rounded-3xl p-6 shadow-xl border-b-8 border-r-4 border-yellow-200 mb-6 text-center relative">
                         <div className="absolute top-4 right-4">
                              <button
@@ -210,7 +276,7 @@ const GameMode: React.FC = () => {
                                   playingId === 'question' ? <Square size={24} className="fill-current"/> : <Volume2 size={24}/>}
                              </button>
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2 chinese-font mt-2">{currentQ.question}</h3>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-2 english-font mt-2">{currentQ.question}</h3>
                         {currentQ.pinyin && <p className="text-orange-500 font-medium mb-4">{currentQ.pinyin}</p>}
                     </div>
 
@@ -254,32 +320,41 @@ const GameMode: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Voice Interaction Area */}
+                <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center justify-center z-20 pointer-events-none">
+                     <p className={`text-sm font-bold bg-black/50 text-white px-3 py-1 rounded-full mb-2 transition-opacity ${voiceFeedback ? 'opacity-100' : 'opacity-0'}`}>
+                        {voiceFeedback}
+                     </p>
+                     
+                     {selectedAnswer === null && (
+                         <button 
+                            onClick={startListening}
+                            className={`p-4 rounded-full shadow-lg transition-all pointer-events-auto ${isListening ? 'bg-red-500 animate-pulse text-white scale-110' : 'bg-blue-500 text-white hover:bg-blue-600'}`}
+                         >
+                            <Mic size={28} />
+                         </button>
+                     )}
+                </div>
+
                 {selectedAnswer !== null && (
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 animate-in slide-in-from-bottom-10 z-20 rounded-t-3xl shadow-2xl">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 animate-in slide-in-from-bottom-10 z-30 rounded-t-3xl shadow-2xl">
                         <div className={`text-lg font-bold mb-1 flex items-center ${isCorrect ? 'text-green-600' : 'text-red-500'}`}>
                             {isCorrect ? (
                                 <>
-                                    <div className="mr-2 text-sm text-green-600 font-normal">dá duì le</div>
-                                    答对了! 🎉
+                                    Correct! 🎉
                                 </>
                             ) : (
                                 <>
-                                    <div className="mr-2 text-sm text-red-400 font-normal">jiā yóu</div>
-                                    加油! 😅
+                                    Incorrect 😅
                                 </>
                             )}
                         </div>
                         <p className="text-gray-600 text-sm mb-4">{currentQ.explanation}</p>
                         <button 
                             onClick={nextQuestion}
-                            className={`w-full py-3 rounded-xl font-bold text-white shadow-md flex items-center justify-center flex-col ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-800 hover:bg-gray-900'}`}
+                            className={`w-full py-3 rounded-xl font-bold text-white shadow-md flex items-center justify-center ${isCorrect ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-800 hover:bg-gray-900'}`}
                         >
-                            <span className="text-[10px] opacity-80 mb-0.5">
-                                {currentIndex < questions.length - 1 ? "xià yí tí" : "wán chéng"}
-                            </span>
-                            <span className="flex items-center">
-                                {currentIndex < questions.length - 1 ? "下一题" : "完成"} <ArrowRight className="ml-2" size={20} />
-                            </span>
+                            {currentIndex < questions.length - 1 ? "Next Question" : "Finish Game"} <ArrowRight className="ml-2" size={20} />
                         </button>
                     </div>
                 )}
@@ -291,13 +366,13 @@ const GameMode: React.FC = () => {
     return (
         <div className="flex flex-col h-full p-4 max-w-md mx-auto w-full overflow-y-auto no-scrollbar pb-24 bg-yellow-50">
             <div className="mb-6 mt-2 relative">
-                <h2 className="text-3xl font-black text-gray-800 flex items-center fun-font mb-1">
+                <h2 className="text-3xl font-black text-gray-800 flex items-center english-font mb-1">
                     <span className="bg-yellow-200 p-2 rounded-xl mr-3 text-yellow-600">🎮</span>
-                    游戏模式
+                    Game Mode
                 </h2>
-                <p className="text-orange-500 font-bold ml-16 text-sm">yóu xì mó shì</p>
+                <p className="text-orange-500 font-bold ml-16 text-sm">Fun English Quizzes</p>
                 <button 
-                    onClick={(e) => handlePlayAudio(e, "游戏模式", "title")}
+                    onClick={(e) => handlePlayAudio(e, "Game Mode", "title")}
                     className="absolute right-0 top-2 p-2 rounded-full bg-white text-gray-400 hover:text-orange-500 shadow-sm"
                 >
                     {audioLoadingId === 'title' ? <Loader2 size={20} className="animate-spin"/> : <Volume2 size={20}/>}
@@ -308,11 +383,11 @@ const GameMode: React.FC = () => {
                 {TOPICS.map((t) => (
                     <button 
                         key={t.name} 
-                        onClick={() => startGame(t.en)}
+                        onClick={() => startGame(t.name)}
                         className="bg-white p-4 rounded-2xl shadow-sm border-b-4 border-yellow-200 active:border-b-0 active:translate-y-1 transition-all hover:bg-yellow-50 text-center group relative overflow-hidden"
                     >
-                        <div className="text-xs text-orange-400 mb-1">{t.pinyin}</div>
-                        <div className="font-bold text-gray-700 text-xl mb-1 group-hover:text-orange-500 chinese-font">{t.name}</div>
+                        <div className="text-3xl mb-2">{t.icon}</div>
+                        <div className="font-bold text-gray-700 text-lg group-hover:text-orange-500 english-font">{t.name}</div>
                         
                         {/* Audio Button on card */}
                         <div 
@@ -326,18 +401,35 @@ const GameMode: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-md border-2 border-orange-100 text-center">
-                 <h3 className="font-bold text-gray-800 mb-1 chinese-font">想学别的吗?</h3>
-                 <p className="text-xs text-orange-400 mb-4">xiǎng xué bié de ma?</p>
+                 <h3 className="font-bold text-gray-800 mb-2 english-font">Want to try another topic?</h3>
                  
-                 <input 
-                    className="w-full bg-gray-50 p-3 rounded-xl border border-gray-200 mb-3 outline-none focus:ring-2 focus:ring-orange-200 text-center"
-                    placeholder="e.g. Space, Dinosaurs..."
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            startGame((e.target as HTMLInputElement).value);
-                        }
-                    }}
-                 />
+                 <div className="flex gap-2 relative">
+                     <input 
+                        className="flex-1 bg-gray-50 p-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-orange-200 text-center"
+                        placeholder="e.g. Space, Dinosaurs..."
+                        value={customTopic}
+                        onChange={(e) => setCustomTopic(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && customTopic) {
+                                startGame(customTopic);
+                            }
+                        }}
+                     />
+                     <button 
+                        onClick={startTopicListening}
+                        className={`p-3 rounded-xl transition-all ${isTopicListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-400 hover:text-blue-500'}`}
+                     >
+                        <Mic size={24} />
+                     </button>
+                 </div>
+                 {customTopic && (
+                    <button 
+                        onClick={() => startGame(customTopic)}
+                        className="mt-3 w-full py-2 bg-blue-500 text-white rounded-xl font-bold shadow-sm flex items-center justify-center animate-in slide-in-from-top-2"
+                    >
+                        <Play size={16} className="mr-2 fill-current"/> Start Quiz: {customTopic}
+                    </button>
+                 )}
             </div>
         </div>
     );

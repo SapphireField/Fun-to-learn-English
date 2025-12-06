@@ -14,9 +14,11 @@ const App: React.FC = () => {
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-sky-50 font-sans text-gray-800">
       
       {/* Header */}
-      <div className="bg-white p-4 shadow-sm z-10 flex justify-center items-center">
-         <span className="text-3xl mr-2">🦁</span>
-         <h1 className="text-xl font-black text-blue-600 tracking-wide english-font">Lion Lingo</h1>
+      <div className="bg-white/80 backdrop-blur-md p-4 shadow-sm z-10 flex justify-center items-center border-b border-white">
+         <div className="bg-yellow-200 p-2 rounded-full mr-3 shadow-inner">
+             <span className="text-2xl">🦁</span>
+         </div>
+         <h1 className="text-2xl font-black text-blue-500 tracking-wide english-font drop-shadow-sm">LingoBuddy</h1>
       </div>
 
       <div className="flex-1 overflow-hidden relative">
@@ -26,27 +28,29 @@ const App: React.FC = () => {
         {activeTab === AppTab.GAME && <GameMode />}
       </div>
 
-      <nav className="bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pt-2 pb-6 px-4 z-20">
-        <div className="max-w-md mx-auto flex justify-between items-center gap-1">
-            {[
-                { id: AppTab.LEARN, icon: BookOpen, label: "Learn", color: "text-blue-500 bg-blue-50" },
-                { id: AppTab.CHAT, icon: MessageCircle, label: "Talk", color: "text-indigo-500 bg-indigo-50" },
-                { id: AppTab.LIBRARY, icon: Library, label: "Stories", color: "text-yellow-500 bg-yellow-50" },
-                { id: AppTab.GAME, icon: Gamepad2, label: "Game", color: "text-green-500 bg-green-50" },
-            ].map(tab => (
-                <button
-                    key={tab.id}
-                    onClick={() => { stopAudio(); setActiveTab(tab.id); }}
-                    className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all duration-300 w-16 ${
-                        activeTab === tab.id ? `${tab.color} -translate-y-2 shadow-sm` : 'text-gray-400'
-                    }`}
-                >
-                    <tab.icon size={20} strokeWidth={activeTab === tab.id ? 3 : 2} />
-                    <span className="text-[10px] font-bold">{tab.label}</span>
-                </button>
-            ))}
-        </div>
-      </nav>
+      {/* Floating Dock Navigation */}
+      <div className="absolute bottom-6 left-0 right-0 px-6 z-30 pointer-events-none">
+          <nav className="bg-white/90 backdrop-blur-xl shadow-2xl rounded-[2rem] p-2 pointer-events-auto border-4 border-white mx-auto max-w-sm">
+            <div className="flex justify-around items-center">
+                {[
+                    { id: AppTab.LEARN, icon: BookOpen, label: "Learn", color: "text-blue-500", bg: "bg-blue-100" },
+                    { id: AppTab.CHAT, icon: MessageCircle, label: "Talk", color: "text-indigo-500", bg: "bg-indigo-100" },
+                    { id: AppTab.LIBRARY, icon: Library, label: "Stories", color: "text-yellow-500", bg: "bg-yellow-100" },
+                    { id: AppTab.GAME, icon: Gamepad2, label: "Game", color: "text-green-500", bg: "bg-green-100" },
+                ].map(tab => (
+                    <button
+                        key={tab.id}
+                        onClick={() => { stopAudio(); setActiveTab(tab.id); }}
+                        className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all duration-300 bouncy ${
+                            activeTab === tab.id ? `${tab.bg} ${tab.color} scale-110 -translate-y-4 shadow-lg ring-4 ring-white` : 'text-gray-400 hover:bg-gray-50'
+                        }`}
+                    >
+                        <tab.icon size={24} strokeWidth={activeTab === tab.id ? 3 : 2.5} />
+                    </button>
+                ))}
+            </div>
+          </nav>
+      </div>
     </div>
   );
 };
