@@ -2,6 +2,7 @@ import { languages, lessons } from './content.mjs';
 import { localDateKey, getLesson, countWords, getGuidedFeedback, scheduleReview } from './learning.mjs';
 import { loadState, saveState, ensureDay, completedSteps, recordingStore } from './storage.mjs';
 import { getDailyPoem } from './poems.mjs';
+import { getSentenceFeedback } from './sentence-feedback.mjs';
 
 const app = document.querySelector('#app');
 const browserStorage = { getItem: key => window.localStorage.getItem(key), setItem: (key, value) => window.localStorage.setItem(key, value) };
@@ -29,6 +30,9 @@ let speakingSource = 'model';
 let storageOK = true;
 let voiceList = [];
 let speechNotice = '';
+const sentenceRequests = new Map();
+const sentenceErrors = new Map();
+const sentenceConflicts = new Map();
 const allWords = lessons.flatMap(l => ['en', 'no'].flatMap(lang => l[lang].words.map(w => ({ ...w, language: lang }))));
 const e = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 const paths = {
@@ -59,6 +63,7 @@ const day = () => ensureDay(state, today, state.language);
 const dayKey = () => `${today}-${state.language}`;
 const dueWords = () => allWords.filter(w => w.language === state.language && state.reviews[w.id]?.due <= today);
 const learnedWords = () => allWords.filter(w => w.language === state.language && state.reviews[w.id]);
+const collectionWords = () => allWords.filter(w => w.language === state.language && (state.reviews[w.id] || Object.values(state.days).some(record => record.sentences?.[w.id]?.trim())));
 function persist() {
   storageOK = saveState(browserStorage, state);
   const warning = document.querySelector('#storage-warning');
@@ -155,11 +160,108 @@ function vocabularyPage() {
   return `${heading('WORDS THAT GO FURTHER', 'A more precise vocabulary.', 'Learn in context. Put it into your own words. Come back to make it stick.')}
   <div class="tab-row" role="group" aria-label="Vocabulary set"><button class="tab ${!reviewMode ? 'active' : ''}" data-action="vocab-tab" data-mode="today">Today’s expressions <span>3</span></button><button class="tab ${reviewMode ? 'active' : ''}" data-action="vocab-tab" data-mode="review">Due for review <span>${due.length}</span></button></div>
   ${reviewMode ? (due.length ? `<p class="section-intro">Try to recall the meaning first. Then reveal the answer and choose how well you remembered.</p><div class="word-grid">${due.map(reviewCard).join('')}</div>` : `<div class="empty-state">${icon('leaf')}<h2>You’re up to date.</h2><p>Learn today’s expressions and they’ll return for a review tomorrow.</p><button class="button primary" data-action="vocab-tab" data-mode="today">Learn today’s words${icon('arrow')}</button></div>`) : `<div class="topic-line"><span class="tag">${e(c.title)}</span><span>Use these in today’s argument and story.</span></div><div class="word-grid">${c.words.map((w, i) => wordCard(w, i)).join('')}</div><div class="next-step"><p>${day().words.length === 3 ? 'Three expressions, ready to put into practice.' : 'Write a sentence for each expression to make it yours.'}</p><button class="button primary" data-action="go" data-route="argument">Put your words to work${icon('arrow')}</button></div>`}
-  ${learnedWords().length ? `<section class="collection"><div class="section-heading"><h2>Your growing collection</h2><span>${learnedWords().length} expressions</span></div><div class="collection-list">${learnedWords().map(w => `<div><strong>${e(w.term)}</strong><span>${e(w.meaning)}</span><small>Next review ${e(state.reviews[w.id].due)}</small></div>`).join('')}</div></section>` : ''}`;
+  ${collectionWords().length ? `<section class="collection"><div class="section-heading"><h2>Your growing collection</h2><span>${collectionWords().length} expressions with saved practice</span></div><div class="collection-list">${collectionWords().map(w => `<div><strong>${e(w.term)}</strong><span>${e(w.meaning)}</span><small>${state.reviews[w.id] ? `Next review ${e(state.reviews[w.id].due)}` : 'Not added to review yet'}</small>${savedSentences(w)}</div>`).join('')}</div></section>` : ''}`;
 }
 function wordCard(w, i) {
   const learned = day().words.includes(w.id);
-  return `<article class="word-card"><div class="word-card-top"><span class="eyebrow">EXPRESSION 0${i + 1}</span><button class="icon-button" data-action="say-word" data-word="${e(w.id)}" aria-label="Listen to ${e(w.term)}">${icon('sound')}</button></div><h2>${e(w.term)}</h2><span class="pronunciation">${e(w.pronunciation)}</span><p class="word-meaning">${e(w.meaning)}</p><span class="translation">${e(w.translation)}</span><blockquote lang="${state.language === 'en' ? 'en-US' : 'nb-NO'}">${e(w.example)}</blockquote><p class="collocation"><strong>Pairs well with</strong>${e(w.collocation)}</p><details class="word-tip"><summary>Usage & pronunciation note</summary><p>${e(w.tip)}</p></details><label class="input-label" for="sentence-${e(w.id)}">Make it yours: write a sentence</label><textarea id="sentence-${e(w.id)}" class="word-sentence" data-word-sentence="${e(w.id)}" rows="3" maxlength="1000" placeholder="Use this expression in your own words…">${e(day().sentences?.[w.id] || '')}</textarea><button class="button ${learned ? 'learned' : 'outline'} full" data-action="learn-word" data-word="${e(w.id)}">${icon(learned ? 'check' : 'book')}${learned ? 'Added to your vocabulary' : 'Add to my vocabulary'}</button></article>`;
+  return `<article class="word-card"><div class="word-card-top"><span class="eyebrow">EXPRESSION 0${i + 1}</span><button class="icon-button" data-action="say-word" data-word="${e(w.id)}" aria-label="Listen to ${e(w.term)}">${icon('sound')}</button></div><h2>${e(w.term)}</h2><span class="pronunciation">${e(w.pronunciation)}</span><p class="word-meaning">${e(w.meaning)}</p><span class="translation">${e(w.translation)}</span><blockquote lang="${state.language === 'en' ? 'en-US' : 'nb-NO'}">${e(w.example)}</blockquote><p class="collocation"><strong>Pairs well with</strong>${e(w.collocation)}</p><details class="word-tip"><summary>Usage & pronunciation note</summary><p>${e(w.tip)}</p></details>${sentencePractice(w, dayKey(), 'today')}<button class="button ${learned ? 'learned' : 'outline'} full" data-action="learn-word" data-word="${e(w.id)}">${icon(learned ? 'check' : 'book')}${learned ? 'Added to your vocabulary' : 'Add to my vocabulary'}</button></article>`;
+}
+function sentenceRequestKey(context, id) { return `${context}:${id}`; }
+function sentencePractice(word, context, location) {
+  const id = `sentence-${context}-${word.id}-${location}`;
+  const text = sentenceConflicts.get(sentenceRequestKey(context, word.id))?.text ?? state.days[context]?.sentences?.[word.id] ?? '';
+  const request = sentenceRequests.get(sentenceRequestKey(context, word.id));
+  return `<div class="sentence-practice" data-sentence-word="${e(word.id)}" data-sentence-context="${e(context)}"><label class="input-label" for="${e(id)}">${location === 'today' ? 'Make it yours: write a sentence' : 'Revise your saved sentence'}</label><textarea id="${e(id)}" class="word-sentence" data-word-sentence="${e(word.id)}" data-sentence-day="${e(context)}" rows="3" maxlength="1000" spellcheck="true" lang="${context.endsWith('-no') ? 'nb-NO' : 'en-US'}" aria-describedby="${e(id)}-help" placeholder="Use this expression in your own words…">${e(text)}</textarea><div class="sentence-feedback-actions"><button class="button outline full" data-action="sentence-guided" data-word="${e(word.id)}" data-sentence-day="${e(context)}" ${countWords(text) < 3 ? 'disabled' : ''}>${icon('spark')}${request ? 'Use guided check instead' : 'Check my sentence'}</button><div class="sentence-ai-option" ${aiStatus.aiAvailable ? '' : 'hidden'}><button class="button primary full" data-action="sentence-ai" data-word="${e(word.id)}" data-sentence-day="${e(context)}" ${request || countWords(text) < 3 ? 'disabled' : ''}>${icon('spark')}${request ? 'Reading your sentence…' : 'Get AI sentence feedback'}</button><p class="sentence-ai-disclosure helper-text">${e(aiStatus.provider || 'The AI service')} receives this sentence and expression only when you request AI feedback.</p></div></div><p class="helper-text sentence-help" id="${e(id)}-help">${countWords(text) < 3 ? 'Write at least 3 words. ' : ''}Guided usage and writing tips. The optional AI service can also review grammar and meaning.</p><div class="sentence-feedback-panel" aria-live="polite" aria-busy="${Boolean(request)}">${sentenceFeedbackHTML(word, context)}</div></div>`;
+}
+function savedSentences(word) {
+  const entries = Object.entries(state.days).filter(([key, record]) => key !== dayKey() && record.sentences?.[word.id]?.trim()).sort(([a], [b]) => b.localeCompare(a));
+  if (!entries.length) return '';
+  return `<details class="saved-sentences"><summary>My saved sentences (${entries.length})</summary>${entries.map(([key]) => `<article class="saved-sentence"><p class="saved-sentence-date">${e(dateLabel(key.slice(0, 10), { year: 'numeric', month: 'long', day: 'numeric' }))}</p>${sentencePractice(word, key, 'saved')}</article>`).join('')}</details>`;
+}
+function sentenceFeedbackHTML(word, context) {
+  const record = state.days[context];
+  const entry = record?.sentenceFeedback?.[word.id];
+  const result = entry?.text === record?.sentences?.[word.id] ? entry?.result : null;
+  const key = sentenceRequestKey(context, word.id);
+  const error = sentenceErrors.get(key);
+  const pending = sentenceRequests.has(key);
+  if (sentenceConflicts.has(key)) return `<div class="notice error sentence-conflict"><p>This sentence changed in another tab. The text shown here has been kept for you. Choose which version to use before checking.</p><div class="sentence-feedback-actions"><button class="button outline" data-action="sentence-use-saved" data-word="${e(word.id)}" data-sentence-day="${e(context)}">Load the saved version</button><button class="button outline" data-action="sentence-keep-local" data-word="${e(word.id)}" data-sentence-day="${e(context)}">Keep the version shown here</button></div></div>`;
+  return `${pending ? '<p class="helper-text">The AI coach is reading this sentence. You can keep editing; a changed sentence will need a new check.</p>' : ''}${error && error.text === record?.sentences?.[word.id] ? `<p class="notice error">${e(error.message)} ${storageOK ? 'Your sentence is saved.' : 'Your sentence is still in the editor; export your practice before closing.'} You can use “Check my sentence” for guided feedback.</p>` : ''}${result ? `<section class="sentence-result" data-source="${e(result.source)}"><span class="eyebrow">${result.source === 'ai' ? 'AI SENTENCE FEEDBACK' : 'GUIDED SENTENCE CHECK'}</span><h3>${result.source === 'guided' ? 'A few things to notice.' : e(result.summary)}</h3>${[['What I noticed', result.strengths], ['Try this next', result.suggestions], ['Think about your meaning', result.questions]].map(([label, items]) => items?.length ? `<h4>${label}</h4><ul>${items.map(item => `<li>${e(item)}</li>`).join('')}</ul>` : '').join('')}${result.source === 'ai' && result.revision ? `<details class="sentence-model"><summary>One possible revision</summary><blockquote lang="${context.endsWith('-no') ? 'nb-NO' : 'en-US'}">${e(result.revision)}</blockquote><p class="helper-text">Use this only if it expresses what you intended. Your original sentence stays in the editor.</p></details>` : ''}<details class="sentence-model"><summary>Compare with an example</summary><blockquote lang="${context.endsWith('-no') ? 'nb-NO' : 'en-US'}">${e(word.example)}</blockquote><p><strong>Useful pattern:</strong> ${e(word.collocation)}</p></details><p class="helper-text">${result.source === 'guided' ? 'This guided check cannot fully assess grammar or meaning.' : 'AI can misunderstand your intention. Keep the changes that help you say what you mean.'} Revise your sentence and check it again.</p></section>` : ''}`;
+}
+function refreshSentenceControls(context, wordId) {
+  for (const form of document.querySelectorAll('.sentence-practice')) {
+    const key = form.dataset.sentenceContext, id = form.dataset.sentenceWord;
+    if (context && (key !== context || id !== wordId)) continue;
+    const word = allWords.find(w => w.id === id);
+    if (!word) continue;
+    const conflict = sentenceConflicts.has(sentenceRequestKey(key, id));
+    const text = sentenceConflicts.get(sentenceRequestKey(key, id))?.text ?? state.days[key]?.sentences?.[id] ?? '';
+    const pending = sentenceRequests.has(sentenceRequestKey(key, id));
+    const guidedButton = form.querySelector('[data-action="sentence-guided"]');
+    guidedButton.disabled = conflict || countWords(text) < 3;
+    guidedButton.innerHTML = `${icon('spark')}${pending ? 'Use guided check instead' : 'Check my sentence'}`;
+    form.querySelector('.sentence-ai-option').hidden = !aiStatus.aiAvailable;
+    form.querySelector('.sentence-ai-disclosure').textContent = `${aiStatus.provider || 'The AI service'} receives this sentence and expression only when you request AI feedback.`;
+    const aiButton = form.querySelector('[data-action="sentence-ai"]');
+    aiButton.disabled = conflict || pending || countWords(text) < 3;
+    aiButton.innerHTML = `${icon('spark')}${pending ? 'Reading your sentence…' : 'Get AI sentence feedback'}`;
+    form.querySelector('.sentence-help').textContent = `${countWords(text) < 3 ? 'Write at least 3 words. ' : ''}Guided usage and writing tips. The optional AI service can also review grammar and meaning.`;
+    const panel = form.querySelector('.sentence-feedback-panel');
+    panel.setAttribute('aria-busy', String(pending));
+    panel.innerHTML = sentenceFeedbackHTML(word, key);
+  }
+}
+function cancelSentenceRequest(context, id) {
+  const key = sentenceRequestKey(context, id);
+  const pending = sentenceRequests.get(key);
+  sentenceRequests.delete(key);
+  pending?.controller.abort();
+  sentenceErrors.delete(key);
+}
+async function checkSentence(context, id, useAI = false) {
+  const record = state.days[context], word = allWords.find(item => item.id === id);
+  const text = record?.sentences?.[id] || '';
+  if (!record || !word || countWords(text) < 3) return;
+  const key = sentenceRequestKey(context, id);
+  if (sentenceConflicts.has(key)) { refreshSentenceControls(context, id); return; }
+  cancelSentenceRequest(context, id);
+  const saveResult = result => {
+    record.sentenceFeedback ||= {};
+    record.sentenceFeedback[id] = { text, result, checkedAt: new Date().toISOString() };
+    persist();
+  };
+  if (!useAI) {
+    saveResult(getSentenceFeedback(text, word.language, word));
+    refreshSentenceControls(context, id);
+    announce(`Guided sentence feedback is ready for ${word.term}.`);
+    return;
+  }
+  if (!aiStatus.aiAvailable) return;
+  const pending = { controller: new AbortController() };
+  sentenceRequests.set(key, pending);
+  refreshSentenceControls(context, id);
+  const timer = setTimeout(() => pending.controller.abort(), 35000);
+  try {
+    const response = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: pending.controller.signal, body: JSON.stringify({ text, kind: 'sentence', language: word.language, prompt: `Write a sentence using ${word.term}.`, words: [word.term], vocabulary: { term: word.term, meaning: word.meaning, collocation: word.collocation, example: word.example, tip: word.tip } }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Sentence feedback is unavailable right now.');
+    if (result.source !== 'ai' || typeof result.summary !== 'string' || typeof result.revision !== 'string' || ['strengths', 'suggestions', 'questions', 'usedWords'].some(field => !Array.isArray(result[field]) || result[field].some(item => typeof item !== 'string')) || !Number.isFinite(result.wordCount)) throw new Error('The feedback response could not be read. Please try again.');
+    if (sentenceRequests.get(key) === pending && state.days[context]?.sentences?.[id] === text) {
+      // Read the current record again: another browser tab may have refreshed state.
+      state.days[context].sentenceFeedback ||= {};
+      state.days[context].sentenceFeedback[id] = { text, result, checkedAt: new Date().toISOString() };
+      persist();
+      announce(`AI sentence feedback is ready for ${word.term}.`);
+    }
+  } catch (error) {
+    if (sentenceRequests.get(key) === pending && state.days[context]?.sentences?.[id] === text) {
+      sentenceErrors.set(key, { text, message: error.name === 'AbortError' ? 'The AI check took too long. Please try again.' : error.message });
+    }
+  } finally {
+    clearTimeout(timer);
+    if (sentenceRequests.get(key) === pending) sentenceRequests.delete(key);
+    refreshSentenceControls(context, id);
+  }
 }
 function reviewCard(w) {
   return `<article class="word-card review-card"><span class="eyebrow">RECALL BEFORE REVEALING</span><h2>${e(w.term)}</h2><p>What does it mean? Can you use it in a sentence?</p><details><summary class="button outline">Reveal meaning</summary><div class="review-answer"><p>${e(w.meaning)}</p><blockquote>${e(w.example)}</blockquote><button class="text-button" data-action="say-word" data-word="${e(w.id)}">${icon('sound')}Listen</button><div class="review-ratings"><button data-action="rate" data-rating="again" data-word="${e(w.id)}">Again</button><button data-action="rate" data-rating="good" data-word="${e(w.id)}">Got it</button><button data-action="rate" data-rating="easy" data-word="${e(w.id)}">Easy</button></div></div></details></article>`;
@@ -207,6 +309,7 @@ function render() {
   app.innerHTML = shell();
   document.querySelector('#page').innerHTML = ({ today: todayPage, vocabulary: vocabularyPage, argument: writingPage, story: writingPage, speaking: speakingPage, progress: progressPage, poem: poemPage })[route]();
   document.title = `${({ today: 'Today’s practice', vocabulary: 'My vocabulary', argument: 'Make your point', story: 'Tell your story', speaking: 'Speaking practice', progress: 'My progress', poem: 'Daily poem' })[route]} — Mellom`;
+  if (route === 'vocabulary') refreshSentenceControls();
   if (route === 'speaking') { updateRecordingControls(); loadRecording(); }
 }
 function openPreferences() {
@@ -406,12 +509,29 @@ app.addEventListener('click', async event => {
     const id = target.dataset.word;
     if (day().words.includes(id)) { announce('This expression is already in your vocabulary.'); return; }
     const sentence = day().sentences?.[id] || '';
-    if (countWords(sentence) < 3) { const input = document.querySelector(`#sentence-${CSS.escape(id)}`); input.setCustomValidity('Write a sentence of at least 3 words before adding this expression.'); input.reportValidity(); input.focus(); return; }
+    if (countWords(sentence) < 3) { const input = target.closest('.word-card').querySelector('[data-word-sentence]'); input.setCustomValidity('Write a sentence of at least 3 words before adding this expression.'); input.reportValidity(); input.focus(); return; }
     day().words.push(id);
     if (!state.reviews[id]) state.reviews[id] = scheduleReview(null, 'good', today);
     persist(); render(); announce('Expression saved. It will return for review.');
   }
   if (action === 'rate') { const id = target.dataset.word; state.reviews[id] = scheduleReview(state.reviews[id], target.dataset.rating, today); persist(); render(); announce('Review saved. Your next review is scheduled.'); }
+  if (action === 'sentence-guided' || action === 'sentence-ai') await checkSentence(target.dataset.sentenceDay, target.dataset.word, action === 'sentence-ai');
+  if (action === 'sentence-use-saved' || action === 'sentence-keep-local') {
+    const context = target.dataset.sentenceDay, id = target.dataset.word;
+    const key = sentenceRequestKey(context, id), conflict = sentenceConflicts.get(key);
+    if (!conflict) return;
+    if (action === 'sentence-keep-local') {
+      const record = ensureDay(state, context.slice(0, 10), context.slice(-2));
+      record.sentences[id] = conflict.text;
+      if (record.sentenceFeedback) delete record.sentenceFeedback[id];
+      persist();
+    }
+    sentenceConflicts.delete(key);
+    for (const input of document.querySelectorAll('[data-word-sentence]')) {
+      if (input.dataset.sentenceDay === context && input.dataset.wordSentence === id) input.value = state.days[context]?.sentences?.[id] || '';
+    }
+    refreshSentenceControls(context, id);
+  }
   if (action === 'feedback') await requestFeedback();
   if (action === 'guided-feedback') { feedback = getGuidedFeedback(day()[route].text, route, state.language, content().words); render(); }
   if (action === 'complete-writing') {
@@ -435,7 +555,17 @@ app.addEventListener('input', event => {
   }
   if (event.target.dataset.wordSentence) {
     event.target.setCustomValidity('');
-    day().sentences ||= {}; day().sentences[event.target.dataset.wordSentence] = event.target.value; persist();
+    const context = event.target.dataset.sentenceDay || dayKey();
+    const id = event.target.dataset.wordSentence;
+    const conflict = sentenceConflicts.get(sentenceRequestKey(context, id));
+    if (conflict) { conflict.text = event.target.value; refreshSentenceControls(context, id); return; }
+    const record = state.days[context];
+    if (!record) return;
+    cancelSentenceRequest(context, id);
+    record.sentences ||= {}; record.sentences[id] = event.target.value;
+    if (record.sentenceFeedback) delete record.sentenceFeedback[id];
+    persist();
+    refreshSentenceControls(context, id);
   }
 });
 app.addEventListener('change', event => {
@@ -451,14 +581,24 @@ window.addEventListener('hashchange', () => {
   route = location.hash.slice(1) || 'today'; feedback = null; window.speechSynthesis?.cancel(); render();
   document.querySelector('#main').focus({ preventScroll: true }); window.scrollTo({ top: 0 });
 });
-window.addEventListener('beforeunload', event => { if (recordingSession && recordingSession.phase !== 'starting') { event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if ((recordingSession && recordingSession.phase !== 'starting') || sentenceConflicts.size) { event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('storage', event => {
   if (event.key !== 'mellom.practice.v1') return;
   // Refresh in-memory data without replacing the active editor or microphone UI.
   const latest = loadState(browserStorage);
+  for (const input of document.querySelectorAll('[data-word-sentence]')) {
+    const context = input.dataset.sentenceDay, id = input.dataset.wordSentence;
+    const key = sentenceRequestKey(context, id);
+    const incoming = latest.days[context]?.sentences?.[id] || '';
+    if (input.value !== incoming) {
+      cancelSentenceRequest(context, id);
+      sentenceConflicts.set(key, { text: input.value });
+    } else sentenceConflicts.delete(key);
+  }
   state.days = latest.days;
   state.reviews = latest.reviews;
   state.voices = latest.voices;
+  refreshSentenceControls();
   announce('Practice data changed in another tab. The latest saved progress is now available.');
 });
 window.addEventListener('focus', () => {
@@ -470,10 +610,11 @@ persist();
 render();
 if (document.querySelector('meta[name="mellom-hosting"]')?.content !== 'static') fetch('/api/status').then(r => { if (!r.ok) throw new Error('No feedback server'); return r.json(); }).then(status => {
   aiStatus = status;
-  const input = document.querySelector('#writing-input');
+  const input = document.querySelector('#writing-input, .word-sentence');
   if (!input && !document.querySelector('dialog[open]') && !recordingSession) render();
   const button = document.querySelector('[data-action="feedback"]');
   if (button && !feedbackBusy) button.innerHTML = `${icon('spark')}${aiStatus.aiAvailable ? 'Get AI feedback' : 'Check my draft'}`;
+  refreshSentenceControls();
   const disclosure = document.querySelector('#feedback-disclosure');
   if (disclosure) disclosure.textContent = `${aiStatus.aiAvailable ? `AI feedback by ${aiStatus.provider}. Your draft is sent only when you request feedback.` : 'Guided checks cover length, structure, and vocabulary use. They do not assess grammar or whether your argument is correct.'} Write at least 30 words to finish.`;
 }).catch(() => { /* Guided practice also works on a static host. */ });

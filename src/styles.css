@@ -2768,3 +2768,142 @@ dialog .input-label{
     gap:3px
   }
 }
+
+/* Sentence coaching stays beside the learner's own writing. */
+.sentence-practice {
+  min-width: 0;
+  margin: 22px 0 16px;
+}
+.sentence-feedback-actions {
+  display: grid;
+  gap: 10px;
+}
+.sentence-feedback-actions .button {
+  white-space: normal;
+  line-height: 1.6;
+}
+.sentence-ai-option {
+  min-width: 0;
+}
+.sentence-help,
+.sentence-ai-disclosure {
+  margin: 10px 0 0;
+  font-size: 13px !important;
+  line-height: 1.8 !important;
+}
+.sentence-feedback-panel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sentence-feedback-panel .notice {
+  margin-top: 14px;
+}
+.sentence-result {
+  margin-top: 18px;
+  padding: 19px 17px;
+  background: #f3f6ec;
+  border: 1px solid #dce5d1;
+  border-radius: 8px;
+}
+.sentence-result .eyebrow {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.sentence-result h3 {
+  font-size: 16px;
+  line-height: 1.7;
+  font-weight: 550;
+  margin: 10px 0 18px;
+  letter-spacing: 0;
+}
+.sentence-result h4 {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #536c44;
+  margin: 17px 0 8px;
+}
+.sentence-result ul {
+  padding-left: 18px;
+  margin: 0 0 15px;
+}
+.sentence-result li,
+.sentence-model p {
+  font-size: 16px;
+  line-height: 1.85;
+  color: #5b6c50;
+  margin-bottom: 9px;
+}
+.sentence-result .helper-text {
+  font-size: 13px !important;
+}
+.sentence-model {
+  margin-top: 18px;
+  border-top: 1px solid #dae4cd;
+  padding-top: 15px;
+}
+.sentence-model summary,
+.saved-sentences > summary {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #46613a;
+  font-weight: 550;
+}
+.sentence-model blockquote {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.8;
+  margin: 15px 0;
+  padding: 13px 16px;
+  background: #fffef9;
+  border-left: 2px solid #a7ba8e;
+  border-radius: 0 5px 5px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.saved-sentences {
+  grid-column: 1 / -1;
+  min-width: 0;
+  width: 100%;
+}
+.saved-sentence {
+  margin: 18px 0;
+  padding: 20px;
+  border: 1px solid #e0e7d8;
+  background: #fafcf7;
+  border-radius: 8px;
+}
+.saved-sentence .sentence-practice {
+  margin: 15px 0 0;
+}
+.saved-sentence-date {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #718264;
+  margin-bottom: 0;
+}
+.saved-sentence .input-label {
+  font-size: 14px;
+}
+.saved-sentence .word-sentence {
+  font-size: 16px;
+  line-height: 1.8;
+}
+.saved-sentence .sentence-feedback-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+.saved-sentence .sentence-ai-disclosure {
+  font-size: 13px !important;
+}
+@media (max-width: 600px) {
+  .sentence-result {
+    padding: 18px 15px;
+  }
+  .saved-sentence {
+    padding: 17px 14px;
+  }
+  .saved-sentence .sentence-feedback-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

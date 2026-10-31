@@ -18,11 +18,11 @@ npm run build
 npm run preview
 ```
 
-Use `PORT=5174 npm run preview` to run a preview alongside the development server. Set `HOST=127.0.0.1` to restrict the listener to the local machine. `npm test` runs Node's built-in tests; `python tests/browser_smoke.py` exercises the browser flow when Python Playwright and Chromium are installed. `python tests/reading_smoke.py` checks reading sizes, daily poetry, and both languages across desktop and phone layouts. In sandboxed environments the HTTP tests and server require permission to listen on a loopback port.
+Use `PORT=5174 npm run preview` to run a preview alongside the development server. Set `HOST=127.0.0.1` to restrict the listener to the local machine. `npm test` runs Node's built-in tests; `python tests/browser_smoke.py` exercises the browser flow when Python Playwright and Chromium are installed. `python tests/reading_smoke.py` checks reading sizes, daily poetry, and both languages across desktop and phone layouts. `python tests/sentence_smoke.py` checks sentence feedback, saved examples, AI mocks, and editing races. In sandboxed environments the HTTP tests and server require permission to listen on a loopback port.
 
 ## Daily practice
 
-- **Vocabulary:** three expressions, meanings, example sentences, usage/pronunciation notes, and a sentence of your own. Learned expressions enter a review queue, with intervals based on Again / Got it / Easy.
+- **Vocabulary:** three expressions, meanings, example sentences, usage/pronunciation notes, and a sentence of your own. Learned expressions enter a review queue, with intervals based on Again / Got it / Easy. Each sentence now has **Check my sentence**: a guided check for expression use, writing mechanics, and word-specific revision prompts. Feedback is saved beside the exact sentence; editing clears the old check so you can revise and check again. Older sentences can be reopened under **My saved sentences** in your vocabulary collection.
 - **Make your point:** a nuanced argument prompt, a structure to work with, and a vocabulary bank.
 - **Tell your story:** a separate narrative prompt and saved draft.
 - **Speaking:** listen to a device voice, practise the model passage or your own draft, record up to three minutes, replay, download, or delete it.
@@ -32,6 +32,8 @@ Use `PORT=5174 npm run preview` to run a preview alongside the development serve
 The interface uses larger reading text throughout (16px for ordinary reading and at least 20px for poetry), with responsive cards and wrapping controls on narrow screens.
 
 The starter pack contains **seven bilingual themes and 42 expressions**. Themes rotate weekly, using calendar days in Europe/Oslo. The poetry starter collection has 14 classics (seven in each language), including 11 complete poems and three clearly labeled excerpts. It rotates independently each day in the selected language. Historical Norwegian spelling is explained in the context notes; it is not a model for modern Bokmål spelling. The suggested language alternates by day; learners can switch anytime. Norwegian prompts and examples use Bokmål. Speech synthesis prefers en-US and nb-NO voices when installed, but it cannot guarantee an Oslo dialect. The app explains that limitation and provides specific pronunciation practice notes. It does **not** automatically assess or score pronunciation.
+
+Vocabulary sentence checks accept short sentences of at least three words. They compare vocabulary forms, suggest specific usage patterns, flag a few observable mechanics, and provide a reference example. They do not automatically judge grammatical correctness, naturalness, or your intended meaning. The original sentence stays in the editor.
 
 Without a provider key, **guided writing checks** identify draft length, some structural signals, and vocabulary occurrences, then offer revision questions. They are explicitly labeled as checklists, not grammar corrections or meaning assessments. Completing a writing activity requires at least 30 words; the suggested practice length is 80–120 words. This version uses a curated intermediate-to-advanced starter curriculum, not an automated proficiency assessment.
 
@@ -43,6 +45,8 @@ Core practice does not require an account or API key. To enable meaning, grammar
 - `GEMINI_API_KEY`: Gemini writing feedback. Optional `GEMINI_MODEL`, default `gemini-2.5-flash`.
 
 Restart the server after changing configuration. OpenAI API usage is billed separately from ChatGPT. Model access and billing depend on the provider account. The npm startup commands enable Node's inherited proxy support through `NODE_USE_ENV_PROXY=1`; keep the configured proxy and TLS verification enabled. The corresponding provider hostname (`api.openai.com` or `generativelanguage.googleapis.com`) must be allowed by your environment network settings.
+
+Pressing **Get AI sentence feedback**, when the optional backend is configured, sends only that sentence and its target expression’s learning notes to the selected provider. It offers specific corrections and an optional suggested revision without replacing the original. The sentence-specific coaching does not require an essay-length response. On GitHub Pages, the guided sentence check works locally without a provider key or network request.
 
 Only pressing **Get AI feedback** sends the current draft, exercise prompt, and target expressions to the selected provider. Feedback encourages revision and clarifies ambiguous meaning rather than replacing the learner's writing wholesale. No writing or audio is sent to the API automatically. Audio is never sent to this backend. Device text-to-speech voices may use their own online service.
 
@@ -81,6 +85,7 @@ The `dist/` folder can also be hosted statically (including Vercel's included st
 - `src/content.mjs`: bilingual starter curriculum.
 - `src/poems.mjs`: public-domain daily poetry, reading notes, and source credits.
 - `src/learning.mjs`: Oslo calendar, guided checks, word matching, review schedules.
+- `src/sentence-feedback.mjs`: local vocabulary sentence checks and usage guidance.
 - `src/storage.mjs`: validated local state and recording storage.
 - `server.mjs`: static server and optional provider proxy.
 - `scripts/build.mjs`: dependency-free static build.

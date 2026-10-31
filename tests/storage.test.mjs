@@ -41,3 +41,29 @@ test('stored values are normalized without losing drafts or duplicate-counting w
   assert.equal(result.days['2026-10-31-en'].argument.text, '<img src=x onerror=alert(1)>');
   assert.deepEqual(Object.keys(result.reviews), ['valid']);
 });
+
+test('sentence feedback survives reload only when it matches the saved sentence', () => {
+  const state = freshState();
+  const record = ensureDay(state, '2026-10-31', 'en');
+  record.sentences['work-en-2'] = 'I have more autonomy at work.';
+  const result = { source: 'guided', summary: 'Usage observations', strengths: ['The expression appears.'], suggestions: ['Be specific about the choices you can make.'], questions: ['What can you decide yourself?'], usedWords: ['autonomy'], wordCount: 7, example: 'Greater autonomy helps me plan my work.', collocation: 'greater autonomy', tip: 'Name a choice.' };
+  record.sentenceFeedback['work-en-2'] = { text: record.sentences['work-en-2'], result, checkedAt: '2026-10-31T10:00:00Z' };
+  const target = storage(null);
+  assert.equal(saveState(target, state), true);
+  assert.deepEqual(loadState(target).days['2026-10-31-en'].sentenceFeedback['work-en-2'].result, result);
+  // Even a spelling or punctuation change makes the previous assessment stale.
+  record.sentences['work-en-2'] += ' I can choose my schedule.';
+  saveState(target, state);
+  assert.deepEqual(loadState(target).days['2026-10-31-en'].sentenceFeedback, {});
+});
+
+test('malformed sentence feedback is ignored while the original writing is preserved', () => {
+  const state = freshState();
+  const record = ensureDay(state, '2026-10-31', 'no');
+  record.sentences['work-no-2'] = 'Jeg ønsker større handlingsrom på jobb.';
+  record.sentenceFeedback['work-no-2'] = { text: record.sentences['work-no-2'], result: { source: 'ai', summary: 'Short feedback', strengths: 'not an array', suggestions: [], questions: [], usedWords: [], wordCount: 7 } };
+  const target = storage(JSON.stringify(state));
+  const restored = loadState(target).days['2026-10-31-no'];
+  assert.equal(restored.sentences['work-no-2'], record.sentences['work-no-2']);
+  assert.deepEqual(restored.sentenceFeedback, {});
+});
