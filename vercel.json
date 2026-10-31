@@ -1,12 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/google-api/(.*)",
-      "destination": "https://generativelanguage.googleapis.com/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }
