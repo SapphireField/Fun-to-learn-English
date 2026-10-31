@@ -12,9 +12,11 @@ export function loadState(storage) {
     result.voices = { en: String(parsed.voices?.en || ''), no: String(parsed.voices?.no || '') };
     for (const [key, day] of Object.entries(parsed.days)) {
       if (!/^\d{4}-\d{2}-\d{2}-(en|no)$/.test(key) || !day || typeof day !== 'object') continue;
+      const sentences = Object.fromEntries(Object.entries(day.sentences && typeof day.sentences === 'object' ? day.sentences : {}).filter(([, value]) => typeof value === 'string'));
       result.days[key] = {
         words: Array.isArray(day.words) ? [...new Set(day.words.filter(w => typeof w === 'string'))] : [],
-        sentences: Object.fromEntries(Object.entries(day.sentences && typeof day.sentences === 'object' ? day.sentences : {}).filter(([, value]) => typeof value === 'string')),
+        sentences,
+        sentenceFeedback: cleanSentenceFeedback(day.sentenceFeedback, sentences),
         argument: cleanDraft(day.argument), story: cleanDraft(day.story),
         speaking: day.speaking === true,
       };
@@ -27,6 +29,23 @@ export function loadState(storage) {
     return result;
   } catch { return freshState(); }
 }
+function cleanSentenceFeedback(records, sentences) {
+  const clean = {};
+  if (!records || typeof records !== 'object' || Array.isArray(records)) return clean;
+  for (const [id, record] of Object.entries(records)) {
+    if (!Object.hasOwn(sentences, id) || typeof record?.text !== 'string' || record.text !== sentences[id]) continue;
+    const result = record.result;
+    if (!result || !['guided', 'ai'].includes(result.source) || typeof result.summary !== 'string' || result.summary.length > 2000
+      || ['strengths', 'suggestions', 'questions', 'usedWords'].some(field => !Array.isArray(result[field]) || result[field].length > 10 || result[field].some(item => typeof item !== 'string' || item.length > 2000))
+      || !Number.isFinite(result.wordCount) || result.wordCount < 0) continue;
+    const feedback = { source: result.source, summary: result.summary, strengths: result.strengths, suggestions: result.suggestions, questions: result.questions, usedWords: result.usedWords, wordCount: result.wordCount };
+    for (const field of ['example', 'collocation', 'tip', 'revision']) {
+      if (typeof result[field] === 'string' && result[field].length <= 2000) feedback[field] = result[field];
+    }
+    clean[id] = { text: record.text, checkedAt: typeof record.checkedAt === 'string' ? record.checkedAt : '', result: feedback };
+  }
+  return clean;
+}
 function cleanDraft(draft) {
   return { text: typeof draft?.text === 'string' ? draft.text : '', complete: draft?.complete === true, updated: typeof draft?.updated === 'string' ? draft.updated : '' };
 }
@@ -36,7 +55,7 @@ export function saveState(storage, state) {
 }
 export function ensureDay(state, date, language) {
   const key = `${date}-${language}`;
-  if (!state.days[key]) state.days[key] = { words: [], sentences: {}, argument: cleanDraft(), story: cleanDraft(), speaking: false };
+  if (!state.days[key]) state.days[key] = { words: [], sentences: {}, sentenceFeedback: {}, argument: cleanDraft(), story: cleanDraft(), speaking: false };
   return state.days[key];
 }
 export function completedSteps(day, wordCount = 3) {

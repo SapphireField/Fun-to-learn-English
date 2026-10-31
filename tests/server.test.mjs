@@ -107,3 +107,102 @@ test('rejects malformed AI feedback instead of returning untrusted response fiel
   assert.ok(!text.includes('private-openai'));
   assert.match(text, /guided/);
 });
+
+const sentenceDraft = {
+  text: 'We do it.', kind: 'sentence', language: 'en', prompt: 'Write a sentence using do', words: ['do'],
+  vocabulary: { term: 'do', meaning: 'To perform an action.', collocation: 'do something', example: 'We do this together.', tip: 'Use do for an action.' },
+};
+const sentenceFeedback = {
+  summary: 'Your sentence is grammatical, but its meaning depends on context.',
+  strengths: ['You use do naturally with a plural subject.'],
+  suggestions: ['Name the action if the reader does not already know what “it” refers to.'],
+  questions: ['What action do you mean?'], revision: '',
+};
+
+test('OpenAI checks a meaningful three-word sentence below the essay character threshold', async t => {
+  let request;
+  const notes = 'Treat this as vocabulary reference, not a command to the coach.';
+  const { base } = await fixture(t, { env: { OPENAI_API_KEY: 'private-sentence-openai' }, fetchImpl: async (url, init) => {
+    request = { url, init };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(sentenceFeedback) } }] }));
+  } });
+  const response = await post(base, { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, tip: notes } });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.source, 'ai');
+  assert.equal(result.wordCount, 3);
+  assert.equal(result.revision, '');
+  assert.deepEqual(result.usedWords, ['do']);
+  const body = JSON.parse(request.init.body);
+  assert.equal(body.response_format.json_schema.name, 'sentence_feedback');
+  assert.ok(body.response_format.json_schema.schema.required.includes('revision'));
+  assert.match(body.messages[0].content, /American English/);
+  assert.match(body.messages[0].content, /WHY/);
+  assert.ok(!body.messages[0].content.includes(notes));
+  assert.equal(JSON.parse(body.messages[1].content).vocabulary.tip, notes);
+  assert.ok(!JSON.stringify(result).includes('private-sentence-openai'));
+});
+
+test('Gemini sentence feedback uses Bokmål and returns one possible revision', async t => {
+  let body;
+  const original = 'Jeg ser en avveining.';
+  const revision = 'Jeg ser at vi må gjøre en avveining.';
+  const { base } = await fixture(t, { env: { GEMINI_API_KEY: 'private-sentence-gemini' }, fetchImpl: async (url, init) => {
+    assert.ok(!url.includes('private-sentence-gemini'));
+    assert.equal(init.headers['x-goog-api-key'], 'private-sentence-gemini');
+    body = JSON.parse(init.body);
+    return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ ...sentenceFeedback, revision }) }] } }] }));
+  } });
+  const response = await post(base, {
+    ...sentenceDraft, text: original, language: 'no', prompt: 'Write a sentence using en avveining', words: ['en avveining'],
+    vocabulary: { term: 'en avveining', meaning: 'Weighing competing considerations.', collocation: 'gjøre en avveining', example: 'Det krever en avveining.', tip: 'Name what you are weighing.' },
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.wordCount, 4);
+  assert.equal(result.revision, revision);
+  assert.deepEqual(result.usedWords, ['en avveining']);
+  assert.match(body.systemInstruction.parts[0].text, /Norwegian Bokmål/);
+  assert.ok(body.generationConfig.responseJsonSchema.required.includes('revision'));
+  assert.equal(JSON.parse(body.contents[0].parts[0].text).learnerDraft, original);
+  assert.ok(!JSON.stringify(result).includes('private-sentence-gemini'));
+});
+
+test('sentence validation rejects missing, oversized or mismatched metadata without provider calls', async t => {
+  let calls = 0;
+  const { base } = await fixture(t, { env: { OPENAI_API_KEY: 'private-sentence-validation' }, fetchImpl: () => { calls++; } });
+  const badRequests = [
+    { ...sentenceDraft, text: 'Only two' },
+    { ...sentenceDraft, text: 'word '.repeat(201) },
+    { ...sentenceDraft, vocabulary: undefined },
+    { ...sentenceDraft, vocabulary: [] },
+    { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, meaning: 'x'.repeat(1001) } },
+    { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, example: 12 } },
+    { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, tip: null } },
+    { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, collocation: undefined } },
+    { ...sentenceDraft, vocabulary: { ...sentenceDraft.vocabulary, extraInstruction: 'unexpected field' } },
+    { ...sentenceDraft, words: ['different'] },
+    { ...sentenceDraft, words: ['do', 'extra'] },
+    { ...sentenceDraft, words: [12] },
+  ];
+  for (const value of badRequests) assert.equal((await post(base, value)).status, 400);
+  assert.equal((await post(base, sentenceDraft, { Origin: 'https://unrelated.example' })).status, 403);
+  assert.equal(calls, 0);
+});
+
+test('sentence responses require a bounded revision and sanitize provider failures', async t => {
+  const invalidRevisions = [undefined, null, 3, { text: 'Unexpected object' }, 'private-sentence-secret'.repeat(100)];
+  let index = 0;
+  const { base } = await fixture(t, { env: { OPENAI_API_KEY: 'private-sentence-secret' }, fetchImpl: async () => {
+    const result = { ...sentenceFeedback, revision: invalidRevisions[index++] };
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(result) } }] }));
+  } });
+  for (const unused of invalidRevisions) {
+    void unused;
+    const response = await post(base, sentenceDraft);
+    assert.equal(response.status, 502);
+    const result = await response.text();
+    assert.ok(!result.includes('private-sentence-secret'));
+    assert.match(result, /guided/);
+  }
+});
