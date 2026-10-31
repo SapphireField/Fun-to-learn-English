@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-Use `PORT=5174 npm run preview` to run a preview alongside the development server. Set `HOST=127.0.0.1` to restrict the listener to the local machine. `npm test` runs Node's built-in tests; `python tests/browser_smoke.py` exercises the browser flow when Python Playwright and Chromium are installed. In sandboxed environments the HTTP tests and server require permission to listen on a loopback port.
+Use `PORT=5174 npm run preview` to run a preview alongside the development server. Set `HOST=127.0.0.1` to restrict the listener to the local machine. `npm test` runs Node's built-in tests; `python tests/browser_smoke.py` exercises the browser flow when Python Playwright and Chromium are installed. `python tests/reading_smoke.py` checks reading sizes, daily poetry, and both languages across desktop and phone layouts. In sandboxed environments the HTTP tests and server require permission to listen on a loopback port.
 
 ## Daily practice
 
@@ -27,8 +27,11 @@ Use `PORT=5174 npm run preview` to run a preview alongside the development serve
 - **Tell your story:** a separate narrative prompt and saved draft.
 - **Speaking:** listen to a device voice, practise the model passage or your own draft, record up to three minutes, replay, download, or delete it.
 - **Progress:** real activity counts, a weekly practice calendar, a writing journal, and a JSON export.
+- **Daily poem:** a rotating public-domain English or Norwegian classic, with author and source credits, a few vocabulary notes, and an optional reflection or read-aloud practice. Open it from the home page; it is a reading break, not an extra required activity.
 
-The starter pack contains **seven bilingual themes and 42 expressions**. Themes rotate weekly, using calendar days in Europe/Oslo. The suggested language alternates by day; learners can switch anytime. Norwegian prompts and examples use Bokmål. Speech synthesis prefers en-US and nb-NO voices when installed, but it cannot guarantee an Oslo dialect. The app explains that limitation and provides specific pronunciation practice notes. It does **not** automatically assess or score pronunciation.
+The interface uses larger reading text throughout (16px for ordinary reading and at least 20px for poetry), with responsive cards and wrapping controls on narrow screens.
+
+The starter pack contains **seven bilingual themes and 42 expressions**. Themes rotate weekly, using calendar days in Europe/Oslo. The poetry starter collection has 14 classics (seven in each language), including 11 complete poems and three clearly labeled excerpts. It rotates independently each day in the selected language. Historical Norwegian spelling is explained in the context notes; it is not a model for modern Bokmål spelling. The suggested language alternates by day; learners can switch anytime. Norwegian prompts and examples use Bokmål. Speech synthesis prefers en-US and nb-NO voices when installed, but it cannot guarantee an Oslo dialect. The app explains that limitation and provides specific pronunciation practice notes. It does **not** automatically assess or score pronunciation.
 
 Without a provider key, **guided writing checks** identify draft length, some structural signals, and vocabulary occurrences, then offer revision questions. They are explicitly labeled as checklists, not grammar corrections or meaning assessments. Completing a writing activity requires at least 30 words; the suggested practice length is 80–120 words. This version uses a curated intermediate-to-advanced starter curriculum, not an automated proficiency assessment.
 
@@ -76,6 +79,7 @@ The `dist/` folder can also be hosted statically (including Vercel's included st
 
 - `src/app.mjs`, `src/styles.css`: accessible responsive user interface.
 - `src/content.mjs`: bilingual starter curriculum.
+- `src/poems.mjs`: public-domain daily poetry, reading notes, and source credits.
 - `src/learning.mjs`: Oslo calendar, guided checks, word matching, review schedules.
 - `src/storage.mjs`: validated local state and recording storage.
 - `server.mjs`: static server and optional provider proxy.

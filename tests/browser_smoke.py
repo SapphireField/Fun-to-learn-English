@@ -93,7 +93,7 @@ def main():
         results.append('Progress journal, actual statistics, and JSON export work')
 
         page.get_by_role('link',name='Speaking practice',exact=True).click()
-        expect(page.locator('#speech-source option')).to_have_count(3)
+        expect(page.locator('#speech-source option')).to_have_count(4)
         page.locator('#speech-source').select_option('argument')
         expect(page.locator('.speech-passage')).to_have_text(ARGUMENT)
         page.locator('[data-action="listen"]').click()
