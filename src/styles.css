@@ -15,7 +15,9 @@
   box-sizing:border-box
 }
 body{
-  margin:0
+  margin:0;
+  font-size:16px;
+  line-height:1.6
 }
 button,input,textarea,select{
   font:inherit
@@ -100,6 +102,8 @@ button svg,a svg{
   background:#f1f3eb;
   display:flex;
   flex-direction:column;
+  overflow-y:auto;
+  overscroll-behavior:contain;
   z-index:10
 }
 .brand{
@@ -133,13 +137,13 @@ button svg,a svg{
   margin-left:-9px
 }
 .brand-caption{
-  font-size:10px;
+  font-size:12px;
   color:var(--muted);
   margin-top:13px;
   letter-spacing:.1px
 }
 .nav-label{
-  font-size:9px;
+  font-size:12px;
   font-weight:600;
   letter-spacing:1.7px;
   color:#8a9286;
@@ -151,7 +155,7 @@ button svg,a svg{
   gap:12px;
   padding:13px 13px;
   margin-bottom:6px;
-  font-size:12px;
+  font-size:14px;
   font-weight:500;
   color:#647168;
   border-radius:7px;
@@ -171,7 +175,7 @@ button svg,a svg{
 .nav-count{
   margin-left:auto;
   background:#fff8;
-  font-size:10px;
+  font-size:12px;
   border-radius:5px;
   padding:2px 5px
 }
@@ -189,7 +193,7 @@ button svg,a svg{
   display:flex;
   align-items:center;
   gap:7px;
-  font-size:11px;
+  font-size:14px;
   font-weight:650
 }
 .meter-label .icon{
@@ -198,7 +202,7 @@ button svg,a svg{
   color:#688753
 }
 .daily-meter p{
-  font-size:10px;
+  font-size:14px;
   line-height:1.7;
   color:var(--muted);
   margin:9px 0 15px
@@ -216,7 +220,7 @@ button svg,a svg{
   border-radius:4px
 }
 .meter-caption{
-  font-size:9px;
+  font-size:12px;
   margin-top:8px;
   color:#838d7b
 }
@@ -225,7 +229,7 @@ button svg,a svg{
   display:flex;
   gap:10px;
   align-items:center;
-  font-size:11px;
+  font-size:14px;
   margin:24px 0 14px;
   padding:5px;
   color:#637264
@@ -235,13 +239,14 @@ button svg,a svg{
   height:17px
 }
 .local-note{
-  font-size:8px;
+  font-size:12px;
   color:#89917f;
   display:flex;
   align-items:center;
   gap:5px;
   padding-left:4px;
-  white-space:nowrap
+  white-space:normal;
+  line-height:1.6
 }
 .status-dot{
   width:5px;
@@ -263,7 +268,7 @@ button svg,a svg{
   gap:20px
 }
 .breadcrumb{
-  font-size:11px;
+  font-size:14px;
   color:#8a938b
 }
 .breadcrumb span{
@@ -289,7 +294,7 @@ button svg,a svg{
   align-items:center;
   gap:7px;
   padding:7px 12px;
-  font-size:11px;
+  font-size:14px;
   color:#778171
 }
 .language-switch button.selected{
@@ -314,7 +319,7 @@ main{
   margin-bottom:29px
 }
 .eyebrow{
-  font-size:9px;
+  font-size:12px;
   font-weight:650;
   letter-spacing:1.7px;
   color:#7b8b72;
@@ -338,7 +343,7 @@ h3{
   letter-spacing:-.2px
 }
 .page-heading p{
-  font-size:12px;
+  font-size:16px;
   color:var(--muted);
   margin:0;
   line-height:1.7
@@ -351,7 +356,7 @@ h3{
   align-items:center;
   gap:7px;
   white-space:nowrap;
-  font-size:10px;
+  font-size:12px;
   border:1px solid var(--line);
   padding:8px 11px;
   border-radius:6px;
@@ -379,7 +384,7 @@ h3{
   z-index:1
 }
 .hero-eyebrow{
-  font-size:9px;
+  font-size:12px;
   letter-spacing:1.6px;
   font-weight:650;
   color:#627a51;
@@ -396,7 +401,7 @@ h3{
 .hero-category{
   margin-left:6px;
   letter-spacing:.3px;
-  font-size:8px;
+  font-size:12px;
   padding:4px 7px;
   border-radius:4px;
   border:1px solid #c8d4b9;
@@ -414,7 +419,7 @@ h3{
   max-width:400px
 }
 .hero-copy>p{
-  font-size:12px;
+  font-size:16px;
   color:#647359;
   line-height:1.8;
   max-width:330px;
@@ -423,8 +428,9 @@ h3{
 .button{
   min-height:42px;
   padding:11px 17px;
+  line-height:1.5;
   border-radius:6px;
-  font-size:11px;
+  font-size:14px;
   font-weight:550;
   display:inline-flex;
   align-items:center;
@@ -458,7 +464,7 @@ h3{
 .hero-meta{
   display:flex;
   gap:17px;
-  font-size:9px;
+  font-size:12px;
   color:#7b886c;
   margin-top:17px
 }
@@ -611,7 +617,7 @@ h3{
   letter-spacing:-.4px
 }
 .subtle,.section-heading>span{
-  font-size:10px;
+  font-size:12px;
   color:#8b9485
 }
 .activity-grid{
@@ -665,11 +671,11 @@ h3{
   width:16px
 }
 .activity-card h3{
-  font-size:15px;
+  font-size:18px;
   margin-bottom:11px
 }
 .activity-card p{
-  font-size:11px;
+  font-size:16px;
   color:#7c8477;
   line-height:1.85;
   min-height:58px;
@@ -684,7 +690,7 @@ h3{
   display:flex;
   align-items:center;
   gap:5px;
-  font-size:9px;
+  font-size:12px;
   color:#89917e
 }
 .activity-bottom .icon{
@@ -722,11 +728,11 @@ h3{
   color:#79916b
 }
 .speaking-banner h3{
-  font-size:16px;
+  font-size:18px;
   margin:4px 0 6px
 }
 .speaking-banner p{
-  font-size:11px;
+  font-size:16px;
   color:#818a79;
   margin:0
 }
@@ -735,7 +741,7 @@ h3{
   white-space:nowrap
 }
 .speaking-banner .eyebrow{
-  font-size:8px
+  font-size:12px
 }
 .dashboard-bottom{
   display:grid;
@@ -754,11 +760,11 @@ h3{
   gap:10px
 }
 .section-heading.small h3{
-  font-size:11px;
+  font-size:15px;
   margin:0
 }
 .section-heading.small>span{
-  font-size:8px;
+  font-size:12px;
   white-space:nowrap
 }
 .week-strip{
@@ -770,7 +776,7 @@ h3{
   display:flex;
   flex-direction:column;
   align-items:center;
-  font-size:9px;
+  font-size:12px;
   color:#909784;
   gap:10px;
   min-width:25px
@@ -783,7 +789,7 @@ h3{
   justify-content:center;
   background:#f3f5ef;
   border-radius:50%;
-  font-size:10px
+  font-size:14px
 }
 .week-day.is-today>div{
   outline:1px solid #91a477;
@@ -795,7 +801,7 @@ h3{
   color:#5c7950
 }
 .week-day b{
-  font-size:7px;
+  font-size:12px;
   font-weight:500;
   color:#6e8561
 }
@@ -821,13 +827,13 @@ h3{
 }
 .tip-card p{
   font-family:Georgia,serif;
-  font-size:17px;
+  font-size:19px;
   line-height:1.5;
   margin:0 0 12px;
   color:#63684e
 }
 .tip-card>span:last-child{
-  font-size:7px;
+  font-size:12px;
   letter-spacing:1.4px;
   color:#979b80
 }
@@ -837,7 +843,7 @@ h3{
   max-width:1440px;
   margin:0 auto;
   padding:30px 48px 24px;
-  font-size:9px;
+  font-size:12px;
   color:#9aA28f
 }
 .tab-row{
@@ -854,7 +860,7 @@ h3{
   background:transparent;
   border:0;
   border-bottom:2px solid transparent;
-  font-size:12px;
+  font-size:14px;
   color:#89917e;
   margin-bottom:-1px
 }
@@ -869,7 +875,7 @@ h3{
 }
 .tab>span{
   padding:2px 6px;
-  font-size:9px;
+  font-size:12px;
   border-radius:4px;
   background:#e8eddf
 }
@@ -877,7 +883,7 @@ h3{
   display:flex;
   align-items:center;
   gap:15px;
-  font-size:11px;
+  font-size:16px;
   color:var(--muted);
   margin:20px 0
 }
@@ -888,7 +894,7 @@ h3{
   border:1px solid #dde5d3;
   padding:5px 9px;
   border-radius:4px;
-  font-size:9px;
+  font-size:12px;
   font-weight:500;
   line-height:1.4
 }
@@ -932,27 +938,27 @@ h3{
   overflow-wrap:anywhere
 }
 .pronunciation{
-  font-size:10px;
+  font-size:14px;
   color:#8c937e;
   line-height:1.7;
   display:block;
   min-height:34px
 }
 .word-meaning{
-  font-size:12px;
+  font-size:16px;
   line-height:1.85;
   color:#52604f;
   min-height:64px;
   margin:16px 0 6px
 }
 .translation{
-  font-size:10px;
+  font-size:14px;
   color:#929988;
   font-style:italic
 }
 .word-card blockquote{
   font-family:Georgia,serif;
-  font-size:14px;
+  font-size:18px;
   line-height:1.7;
   padding:14px;
   margin:20px 0;
@@ -961,18 +967,18 @@ h3{
   border-radius:0 5px 5px 0
 }
 .collocation{
-  font-size:10px;
+  font-size:14px;
   line-height:1.7;
   color:#7b866d
 }
 .collocation strong{
   display:block;
   color:#4b6544;
-  font-size:9px;
+  font-size:12px;
   margin-bottom:3px
 }
 .word-tip{
-  font-size:10px;
+  font-size:14px;
   color:#6c7b60;
   margin:18px 0
 }
@@ -980,12 +986,12 @@ h3{
   cursor:pointer
 }
 .word-tip p{
-  font-size:10px;
+  font-size:16px;
   line-height:1.7;
   margin-top:8px
 }
 .input-label{
-  font-size:10px;
+  font-size:14px;
   font-weight:550;
   display:block;
   margin-bottom:9px;
@@ -998,7 +1004,7 @@ h3{
   border:1px solid var(--line);
   border-radius:5px;
   padding:10px;
-  font-size:11px;
+  font-size:16px;
   line-height:1.6;
   background:#fcfdf9;
   color:#334b3c;
@@ -1013,7 +1019,7 @@ textarea::placeholder{
 .learned{
   background:#e7efdd;
   color:#5e7d49;
-  font-size:10px
+  font-size:14px
 }
 .next-step{
   display:flex;
@@ -1023,7 +1029,7 @@ textarea::placeholder{
   gap:20px
 }
 .next-step p{
-  font-size:12px;
+  font-size:16px;
   color:var(--muted);
   margin:0
 }
@@ -1046,19 +1052,19 @@ textarea::placeholder{
   font-weight:normal
 }
 .empty-state p{
-  font-size:13px;
+  font-size:16px;
   color:var(--muted);
   line-height:1.8;
   margin-bottom:24px
 }
 .section-intro{
-  font-size:12px;
+  font-size:16px;
   color:var(--muted);
   margin-bottom:24px;
   line-height:1.8
 }
 .review-card>p{
-  font-size:12px;
+  font-size:16px;
   line-height:1.8;
   color:var(--muted);
   margin:18px 0
@@ -1072,7 +1078,7 @@ textarea::placeholder{
   width:100%
 }
 .review-answer p{
-  font-size:12px;
+  font-size:16px;
   line-height:1.8;
   margin-top:20px
 }
@@ -1086,7 +1092,7 @@ textarea::placeholder{
   background:#ecf1e4;
   border:1px solid #dfe7d5;
   border-radius:5px;
-  font-size:11px;
+  font-size:14px;
   flex:1
 }
 .collection-list{
@@ -1108,16 +1114,16 @@ textarea::placeholder{
 }
 .collection-list strong{
   font-family:Georgia,serif;
-  font-size:17px;
+  font-size:20px;
   font-weight:normal
 }
 .collection-list span{
-  font-size:11px;
+  font-size:16px;
   color:var(--muted);
   line-height:1.7
 }
 .collection-list small{
-  font-size:9px;
+  font-size:12px;
   color:#8d957f;
   text-align:right
 }
@@ -1143,7 +1149,7 @@ textarea::placeholder{
 .prompt-meta{
   display:flex;
   gap:20px;
-  font-size:10px;
+  font-size:12px;
   color:#8a937c
 }
 .prompt-meta>span{
@@ -1167,12 +1173,12 @@ textarea::placeholder{
   gap:10px;
   padding:19px 23px;
   border-bottom:1px solid #edf0e7;
-  font-size:11px;
+  font-size:14px;
   color:#4c6244
 }
 .editor-label span{
   color:#8f9983;
-  font-size:9px;
+  font-size:12px;
   font-weight:400
 }
 .editor-card textarea{
@@ -1183,14 +1189,14 @@ textarea::placeholder{
   resize:vertical;
   outline-offset:-4px;
   padding:23px;
-  font-size:14px;
+  font-size:17px;
   line-height:1.95;
   color:#394e3d
 }
 .editor-footer{
   display:flex;
   justify-content:space-between;
-  font-size:9px;
+  font-size:12px;
   color:#8f9982;
   padding:14px 23px;
   border-top:1px solid #edf0e7
@@ -1202,7 +1208,7 @@ textarea::placeholder{
   flex-wrap:wrap
 }
 .helper-text{
-  font-size:10px!important;
+  font-size:16px!important;
   line-height:1.8!important;
   color:#8a947e!important;
   max-width:850px
@@ -1223,7 +1229,7 @@ textarea::placeholder{
   margin-bottom:19px
 }
 .support-card h3{
-  font-size:14px;
+  font-size:18px;
   line-height:1.6
 }
 .scaffold{
@@ -1234,7 +1240,7 @@ textarea::placeholder{
 .scaffold li{
   counter-increment:steps;
   position:relative;
-  font-size:11px;
+  font-size:16px;
   line-height:1.8;
   color:#76826b;
   padding:3px 0 16px 30px
@@ -1250,11 +1256,11 @@ textarea::placeholder{
   height:20px;
   border:1px solid #e2e7d7;
   border-radius:50%;
-  font-size:8px;
+  font-size:12px;
   color:#8c9b7a
 }
 .support-note{
-  font-size:10px;
+  font-size:14px;
   line-height:1.8;
   color:#98a087;
   margin-bottom:0;
@@ -1266,13 +1272,13 @@ textarea::placeholder{
 }
 .word-bank strong{
   font-family:Georgia,serif;
-  font-size:17px;
+  font-size:20px;
   font-weight:normal;
   display:block
 }
 .word-bank span{
   display:block;
-  font-size:10px;
+  font-size:16px;
   color:#8a947c;
   line-height:1.8;
   margin-top:6px
@@ -1285,12 +1291,12 @@ textarea::placeholder{
   margin-top:22px
 }
 .feedback-card h2{
-  font-size:19px;
+  font-size:20px;
   line-height:1.6;
   margin-top:12px
 }
 .feedback-card h3{
-  font-size:12px;
+  font-size:16px;
   margin-top:20px;
   color:#627a51
 }
@@ -1299,7 +1305,7 @@ textarea::placeholder{
   margin-bottom:14px
 }
 .feedback-card li{
-  font-size:12px;
+  font-size:16px;
   color:#76836a;
   line-height:1.85;
   margin-bottom:8px
@@ -1308,7 +1314,7 @@ textarea::placeholder{
   padding:17px 20px;
   border:1px solid #dce4d0;
   border-radius:8px;
-  font-size:12px;
+  font-size:16px;
   line-height:1.7;
   margin-bottom:20px
 }
@@ -1336,7 +1342,7 @@ textarea::placeholder{
   gap:15px
 }
 .speech-card select,.speed-label select{
-  font-size:10px;
+  font-size:14px;
   border:1px solid var(--line);
   padding:7px 8px;
   border-radius:5px;
@@ -1365,7 +1371,7 @@ textarea::placeholder{
   align-items:center;
   gap:8px;
   color:#8a947d;
-  font-size:10px
+  font-size:14px
 }
 .focus-list{
   list-style:none;
@@ -1375,7 +1381,7 @@ textarea::placeholder{
   display:flex;
   align-items:flex-start;
   gap:9px;
-  font-size:12px;
+  font-size:16px;
   line-height:1.9;
   color:#78866d;
   margin-top:15px
@@ -1399,7 +1405,7 @@ textarea::placeholder{
   margin:10px 0
 }
 .recording-heading p{
-  font-size:12px;
+  font-size:16px;
   color:var(--muted);
   line-height:1.8
 }
@@ -1410,7 +1416,7 @@ textarea::placeholder{
   background:#fff
 }
 .privacy-badge{
-  font-size:9px;
+  font-size:12px;
   color:#8b9a7b;
   background:#f3f6eb;
   padding:7px 10px;
@@ -1434,7 +1440,7 @@ textarea::placeholder{
   gap:10px;
   align-items:center;
   border-radius:30px;
-  font-size:12px;
+  font-size:14px;
   font-weight:550
 }
 .record-button.recording{
@@ -1452,7 +1458,7 @@ textarea::placeholder{
   color:#89987d
 }
 #recording-status{
-  font-size:11px;
+  font-size:14px;
   color:#8a957f;
   flex:1;
   min-width:180px;
@@ -1468,11 +1474,11 @@ textarea::placeholder{
   margin-bottom:25px
 }
 .saved-recording strong{
-  font-size:11px;
+  font-size:14px;
   display:block
 }
 .saved-recording small{
-  font-size:9px;
+  font-size:12px;
   color:#929b85;
   display:block;
   margin-top:7px;
@@ -1489,7 +1495,7 @@ textarea::placeholder{
   align-items:center;
   gap:7px;
   background:transparent;
-  font-size:11px;
+  font-size:14px;
   color:#688252;
   padding:5px 0
 }
@@ -1525,7 +1531,7 @@ textarea::placeholder{
   margin-bottom:8px
 }
 .stat-card>span{
-  font-size:10px;
+  font-size:14px;
   color:#89947e;
   line-height:1.7
 }
@@ -1565,12 +1571,12 @@ textarea::placeholder{
 }
 .journal-entry summary strong{
   display:block;
-  font-size:13px;
+  font-size:16px;
   font-weight:550;
   margin-bottom:7px
 }
 .journal-entry summary small{
-  font-size:10px;
+  font-size:12px;
   color:#8b967e
 }
 .journal-entry summary>.icon{
@@ -1582,7 +1588,7 @@ textarea::placeholder{
   padding:22px 25px;
   border-top:1px solid var(--line);
   white-space:pre-wrap;
-  font-size:14px;
+  font-size:17px;
   line-height:1.9;
   color:#5d7052;
   overflow-wrap:anywhere
@@ -1616,12 +1622,12 @@ dialog::backdrop{
   margin:7px 0 0
 }
 dialog p{
-  font-size:12px;
+  font-size:16px;
   line-height:1.9;
   color:#79856e
 }
 dialog h3{
-  font-size:13px
+  font-size:16px
 }
 dialog hr{
   border:0;
@@ -1635,10 +1641,10 @@ dialog hr{
   border-radius:6px;
   background:#fff;
   color:#728363;
-  font-size:12px
+  font-size:16px
 }
 dialog .input-label{
-  font-size:12px;
+  font-size:14px;
   margin-top:10px
 }
 .voice-slip,.word-slip{
@@ -1659,7 +1665,7 @@ dialog .input-label{
     max-width:470px
   }
   .hero-copy>p{
-    font-size:14px;
+    font-size:16px;
     max-width:430px
   }
   .hero-art{
@@ -1681,11 +1687,11 @@ dialog .input-label{
     padding:26px
   }
   .activity-card p{
-    font-size:12px;
+    font-size:16px;
     max-width:240px
   }
   .activity-card h3{
-    font-size:17px
+    font-size:18px
   }
 }
 @media(max-width:1150px){
@@ -1711,10 +1717,10 @@ dialog .input-label{
     font-size:29px
   }
   .brand-caption{
-    font-size:9px
+    font-size:12px
   }
   .nav-item{
-    font-size:11px;
+    font-size:14px;
     padding-left:10px
   }
   .hero-copy{
@@ -1747,7 +1753,7 @@ dialog .input-label{
   }
   .hero-meta{
     gap:10px;
-    font-size:8px
+    font-size:12px
   }
   .practice-pill{
     display:none
@@ -1756,10 +1762,10 @@ dialog .input-label{
     padding:18px 16px
   }
   .activity-card h3{
-    font-size:13px
+    font-size:18px
   }
   .activity-card p{
-    font-size:10px
+    font-size:16px
   }
   .word-grid{
     gap:12px
@@ -1771,12 +1777,12 @@ dialog .input-label{
     font-size:22px
   }
   .word-card .button{
-    font-size:9px;
+    font-size:14px;
     padding:10px 7px;
     gap:5px
   }
   .word-card .eyebrow{
-    font-size:8px
+    font-size:12px
   }
   .word-meaning{
     min-height:83px
@@ -1812,14 +1818,14 @@ dialog .input-label{
     padding:20px 17px
   }
   .local-note{
-    font-size:7px
+    font-size:12px
   }
   .speaking-banner .button{
     padding:10px 12px;
     gap:7px
   }
   .speaking-banner p{
-    font-size:10px
+    font-size:16px
   }
   .speaking-banner{
     gap:12px
@@ -1931,10 +1937,10 @@ dialog .input-label{
     gap:10px
   }
   .speaking-banner h3{
-    font-size:15px
+    font-size:18px
   }
   .speaking-banner .eyebrow{
-    font-size:7px
+    font-size:12px
   }
   .word-grid{
     grid-template-columns:1fr
@@ -1943,7 +1949,7 @@ dialog .input-label{
     font-size:29px
   }
   .word-card .eyebrow{
-    font-size:9px
+    font-size:12px
   }
   .word-card{
     padding:24px
@@ -1955,7 +1961,7 @@ dialog .input-label{
     min-height:0
   }
   .word-card .button{
-    font-size:11px
+    font-size:14px
   }
   .word-sentence{
     min-height:80px
@@ -1991,8 +1997,8 @@ dialog .input-label{
     position:fixed;
     inset:auto 0 0 0;
     width:100%;
-    height:67px;
-    padding:5px 8px 8px;
+    height:calc(84px + env(safe-area-inset-bottom));
+    padding:5px 8px calc(8px + env(safe-area-inset-bottom));
     background:#f3f5edee;
     backdrop-filter:blur(12px);
     border:0;
@@ -2014,7 +2020,8 @@ dialog .input-label{
     margin:0;
     padding:7px 5px 6px;
     border-radius:7px;
-    min-width:58px
+    min-width:0;
+    flex:1
   }
   .nav-item .icon{
     width:18px;
@@ -2022,18 +2029,20 @@ dialog .input-label{
   }
   .nav-item>span{
     display:block;
-    font-size:7px
+    font-size:10px;
+    line-height:1.25;
+    text-align:center
   }
   .nav-item .nav-count{
     display:none
   }
   .workspace{
     margin-left:0;
-    padding-bottom:67px
+    padding-bottom:calc(84px + env(safe-area-inset-bottom))
   }
   .topbar{
     height:70px;
-    padding:0 19px;
+    padding:0 14px;
     gap:10px
   }
   .breadcrumb{
@@ -2051,14 +2060,14 @@ dialog .input-label{
   }
   .language-switch button{
     padding:6px 8px;
-    font-size:10px;
+    font-size:14px;
     gap:5px
   }
   .language-switch{
     padding:3px
   }
   .flag{
-    font-size:12px
+    font-size:14px
   }
   main{
     padding:27px 20px 12px
@@ -2072,12 +2081,12 @@ dialog .input-label{
     margin:10px 0
   }
   .page-heading p{
-    font-size:11px;
+    font-size:16px;
     line-height:1.8;
     max-width:340px
   }
   .eyebrow{
-    font-size:8px
+    font-size:12px
   }
   .hero{
     min-height:330px
@@ -2089,7 +2098,7 @@ dialog .input-label{
   }
   .hero-copy>p{
     max-width:230px;
-    font-size:11px;
+    font-size:16px;
     margin-bottom:20px
   }
   .hero h2{
@@ -2155,11 +2164,11 @@ dialog .input-label{
     right:-34px
   }
   .hero-eyebrow{
-    font-size:8px
+    font-size:12px
   }
   .hero-category{
     display:inline;
-    font-size:7px;
+    font-size:12px;
     margin-left:4px
   }
   .section-heading{
@@ -2172,7 +2181,7 @@ dialog .input-label{
     max-width:250px
   }
   .subtle{
-    font-size:9px;
+    font-size:12px;
     white-space:nowrap
   }
   .activity-grid{
@@ -2203,12 +2212,12 @@ dialog .input-label{
     font-size:13px
   }
   .activity-card h3{
-    font-size:15px;
+    font-size:18px;
     padding-right:20px;
     margin-bottom:8px
   }
   .activity-card p{
-    font-size:11px;
+    font-size:16px;
     min-height:0;
     margin-bottom:8px;
     max-width:250px;
@@ -2226,7 +2235,7 @@ dialog .input-label{
     bottom:17px
   }
   .activity-bottom>span:first-child{
-    font-size:8px
+    font-size:12px
   }
   .speaking-banner{
     padding:20px 17px;
@@ -2238,15 +2247,15 @@ dialog .input-label{
     flex:1
   }
   .speaking-banner p{
-    font-size:10px
+    font-size:16px
   }
   .speaking-banner .button{
     margin-left:51px;
     min-height:34px;
-    font-size:10px
+    font-size:14px
   }
   .speaking-banner .eyebrow{
-    font-size:7px
+    font-size:12px
   }
   .speaking-icon{
     width:39px;
@@ -2270,7 +2279,7 @@ dialog .input-label{
     padding:23px 20px;
     gap:10px;
     align-items:flex-start;
-    font-size:8px;
+    font-size:12px;
     line-height:1.6
   }
   .page-footer>span:last-child{
@@ -2281,13 +2290,13 @@ dialog .input-label{
     gap:20px
   }
   .tab{
-    font-size:11px;
+    font-size:14px;
     gap:6px
   }
   .topic-line{
     align-items:flex-start;
     flex-direction:column;
-    font-size:10px;
+    font-size:16px;
     gap:10px
   }
   .word-card{
@@ -2299,17 +2308,17 @@ dialog .input-label{
   }
   .next-step p{
     max-width:none;
-    font-size:11px
+    font-size:16px
   }
   .collection-list>div{
     grid-template-columns:1fr;
     gap:9px
   }
   .collection-list strong{
-    font-size:19px
+    font-size:20px
   }
   .collection-list span{
-    font-size:12px
+    font-size:16px
   }
   .writing-aside{
     grid-template-columns:1fr
@@ -2321,38 +2330,38 @@ dialog .input-label{
     font-size:23px
   }
   .prompt-meta{
-    font-size:9px;
+    font-size:12px;
     gap:15px
   }
   .editor-label{
     padding:17px;
-    font-size:10px
+    font-size:14px
   }
   .editor-label span{
-    font-size:8px
+    font-size:12px
   }
   .editor-card textarea{
     padding:18px;
     min-height:330px;
-    font-size:14px
+    font-size:17px
   }
   .editor-footer{
     padding:12px 17px;
-    font-size:8px
+    font-size:12px
   }
   .writing-actions{
     gap:9px
   }
   .writing-actions .button{
-    font-size:10px;
+    font-size:14px;
     padding:11px 13px;
     gap:8px
   }
   .support-card h3{
-    font-size:15px
+    font-size:18px
   }
   .scaffold li{
-    font-size:12px
+    font-size:16px
   }
   .speech-card{
     padding:22px
@@ -2376,7 +2385,7 @@ dialog .input-label{
   }
   .recording-controls #recording-status{
     flex-basis:100%;
-    font-size:11px
+    font-size:14px
   }
   .saved-recording{
     padding:15px;
@@ -2405,7 +2414,7 @@ dialog .input-label{
     margin-bottom:17px
   }
   .stat-card>span{
-    font-size:11px
+    font-size:14px
   }
   .progress-week .week-strip{
     padding:10px 0
@@ -2423,14 +2432,14 @@ dialog .input-label{
     padding:16px
   }
   .journal-entry summary strong{
-    font-size:11px
+    font-size:16px
   }
   .journal-entry summary small{
-    font-size:8px;
+    font-size:12px;
     line-height:1.7
   }
   .journal-entry .tag{
-    font-size:7px;
+    font-size:12px;
     padding:4px
   }
   .journal-icon{
@@ -2442,10 +2451,10 @@ dialog .input-label{
   }
   .journal-text{
     padding:18px;
-    font-size:13px
+    font-size:17px
   }
   .section-heading .text-button{
-    font-size:9px;
+    font-size:14px;
     white-space:nowrap
   }
   .empty-state{
@@ -2455,7 +2464,7 @@ dialog .input-label{
     font-size:26px
   }
   .empty-state p{
-    font-size:12px
+    font-size:16px
   }
   dialog{
     padding:23px
@@ -2464,7 +2473,7 @@ dialog .input-label{
     font-size:25px
   }
   .full-select{
-    font-size:11px
+    font-size:16px
   }
 }
 @media(prefers-reduced-motion:reduce){
@@ -2508,5 +2517,254 @@ dialog .input-label{
   }
   .speaking-banner p{
     line-height:1.7
+  }
+}
+
+/* Larger type needs room to wrap instead of a fixed-size container. */
+.sidebar>nav,.sidebar-bottom{
+  flex-shrink:0
+}
+.nav-item>span:not(.nav-count){
+  min-width:0
+}
+.status-dot{
+  flex-shrink:0
+}
+.hero-eyebrow,.hero-meta,.section-heading,.topic-line,.prompt-meta,.editor-label{
+  flex-wrap:wrap
+}
+.hero-copy,.activity-card,.word-card,.writing-main,.writing-aside,.speech-card,.support-card,.journal-entry summary>span:nth-child(2){
+  min-width:0
+}
+.nav-item,.meter-label,.settings-link,.language-switch button{
+  line-height:1.5
+}
+.word-sentence{
+  min-height:104px
+}
+.word-card .button{
+  min-height:48px
+}
+.helper-text{
+  color:#67735f!important
+}
+.brand-caption,.local-note{
+  color:#6b7763
+}
+.section-heading.small{
+  align-items:baseline
+}
+.speaking-banner .eyebrow{
+  white-space:normal
+}
+.review-ratings{
+  flex-wrap:wrap
+}
+.review-ratings button{
+  padding:10px
+}
+.editor-footer{
+  gap:12px;
+  flex-wrap:wrap
+}
+
+/* A quiet daily reading space, with the poem's line and stanza breaks intact. */
+.daily-poem-preview{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) auto;
+  align-items:center;
+  gap:26px;
+  margin:24px 0 8px;
+  padding:28px 30px;
+  background:#f5f1e7;
+  border:1px solid #e7e1d2;
+  border-radius:12px
+}
+.poem-preview-copy,.poem-preview-lines{
+  min-width:0
+}
+.poem-preview-copy h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:27px;
+  font-weight:normal;
+  line-height:1.35;
+  margin:9px 0
+}
+.poem-preview-copy p{
+  font-size:14px;
+  color:#7c7968;
+  margin:0;
+  line-height:1.7
+}
+.poem-preview-lines{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:19px;
+  line-height:1.8;
+  color:#555e4b;
+  border-left:2px solid #d8d2ba;
+  padding-left:24px;
+  margin:0
+}
+.poem-preview-lines span{
+  display:block;
+  overflow-wrap:anywhere
+}
+.poem-reading-layout{
+  display:grid;
+  grid-template-columns:minmax(0,2.2fr) minmax(240px,1fr);
+  align-items:start;
+  gap:26px
+}
+.poem-reading-card{
+  min-width:0;
+  background:#fffef9;
+  border:1px solid #e4e3d5;
+  border-radius:12px;
+  padding:36px 40px
+}
+.poem-reading-card h2{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:32px;
+  font-weight:normal;
+  line-height:1.35;
+  margin:0 0 9px
+}
+.poem-byline{
+  font-size:14px;
+  color:#7b816d;
+  line-height:1.7;
+  margin-bottom:26px
+}
+.poem-context{
+  font-size:16px;
+  line-height:1.8;
+  color:#6d7862;
+  margin:0 0 28px
+}
+.poem-text{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:22px;
+  line-height:1.8;
+  color:#354a38;
+  padding:12px 0;
+  overflow-wrap:anywhere
+}
+.poem-text p{
+  margin:0 0 1.5em
+}
+.poem-text p:last-child{
+  margin-bottom:0
+}
+.poem-text span{
+  display:block;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere
+}
+.poem-reading-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin:28px 0 22px
+}
+.poem-credit{
+  border-top:1px solid #e7e8dc;
+  padding-top:18px;
+  font-size:12px;
+  line-height:1.8;
+  color:#7c866e;
+  overflow-wrap:anywhere
+}
+.poem-credit a{
+  text-decoration:underline;
+  text-underline-offset:3px
+}
+.poem-glossary dl{
+  margin:0
+}
+.poem-glossary dt{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:20px;
+  line-height:1.5;
+  margin:18px 0 5px;
+  color:#425b3b
+}
+.poem-glossary dd{
+  font-size:16px;
+  line-height:1.8;
+  color:#718064;
+  margin:0
+}
+@media(max-width:1150px){
+  .daily-poem-preview{
+    grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)
+  }
+  .daily-poem-preview>.button{
+    grid-column:1/-1;
+    justify-self:start
+  }
+}
+@media(max-width:1000px){
+  .poem-reading-layout{
+    grid-template-columns:minmax(0,1fr)
+  }
+}
+@media(max-width:600px){
+  .sidebar{
+    overflow:visible
+  }
+  .nav-item{
+    padding-left:0;
+    padding-right:0
+  }
+  .topbar-actions{
+    flex-shrink:0
+  }
+  .speaking-banner .eyebrow{
+    white-space:normal
+  }
+  .daily-poem-preview{
+    grid-template-columns:minmax(0,1fr);
+    gap:22px;
+    padding:25px 23px
+  }
+  .poem-preview-lines{
+    font-size:20px;
+    padding-left:19px
+  }
+  .poem-reading-card{
+    padding:27px 24px
+  }
+  .poem-reading-card h2{
+    font-size:29px
+  }
+  .poem-text{
+    font-size:20px
+  }
+  .poem-reading-actions{
+    align-items:stretch
+  }
+}
+@media(max-width:380px){
+  .topbar .flag{
+    display:none
+  }
+  .breadcrumb:before{
+    font-size:24px
+  }
+}
+.tab-row{
+  flex-wrap:wrap;
+  row-gap:0
+}
+.week-day{
+  min-width:0;
+  flex:1
+}
+.journal-entry summary strong{
+  overflow-wrap:anywhere
+}
+@media(max-width:380px){
+  .week-strip{
+    gap:3px
   }
 }

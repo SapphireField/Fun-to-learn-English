@@ -1,6 +1,7 @@
 import { languages, lessons } from './content.mjs';
 import { localDateKey, getLesson, countWords, getGuidedFeedback, scheduleReview } from './learning.mjs';
 import { loadState, saveState, ensureDay, completedSteps, recordingStore } from './storage.mjs';
+import { getDailyPoem } from './poems.mjs';
 
 const app = document.querySelector('#app');
 const browserStorage = { getItem: key => window.localStorage.getItem(key), setItem: (key, value) => window.localStorage.setItem(key, value) };
@@ -53,6 +54,7 @@ const icon = (name, cls = '') => `<svg class="icon ${cls}" viewBox="0 0 24 24" f
 const language = () => languages.find(l => l.id === state.language);
 const lesson = () => getLesson(today);
 const content = () => lesson()[state.language];
+const dailyPoem = () => getDailyPoem(today, state.language);
 const day = () => ensureDay(state, today, state.language);
 const dayKey = () => `${today}-${state.language}`;
 const dueWords = () => allWords.filter(w => w.language === state.language && state.reviews[w.id]?.due <= today);
@@ -82,7 +84,7 @@ function shell() {
     <div class="brand-caption">A little practice. A clearer voice.</div>
     <div class="nav-label">YOUR SPACE</div>
     <nav aria-label="Main navigation">
-      ${navItem('today', 'Today’s practice', 'sun', route === 'today')}
+      ${navItem('today', 'Today’s practice', 'sun', route === 'today' || route === 'poem')}
       ${navItem('vocabulary', 'My vocabulary', 'book', route === 'vocabulary')}
       ${navItem('argument', 'Writing studio', 'pen', ['argument', 'story'].includes(route))}
       ${navItem('speaking', 'Speaking practice', 'mic', route === 'speaking')}
@@ -94,7 +96,7 @@ function shell() {
       <div class="local-note"><span class="status-dot"></span> Your progress stays on this device</div>
     </div>
   </aside>
-  <div class="workspace"><header class="topbar"><div class="breadcrumb">Your daily language space <span>/</span> <strong>${({ today: 'Overview', vocabulary: 'Vocabulary', argument: 'Writing', story: 'Writing', speaking: 'Speaking', progress: 'Progress' })[route]}</strong></div>
+  <div class="workspace"><header class="topbar"><div class="breadcrumb">Your daily language space <span>/</span> <strong>${({ today: 'Overview', vocabulary: 'Vocabulary', argument: 'Writing', story: 'Writing', speaking: 'Speaking', progress: 'Progress', poem: 'Daily poem' })[route]}</strong></div>
     <div class="topbar-actions"><div class="language-switch" role="group" aria-label="Practice language">${languages.map(l => `<button data-action="language" data-language="${l.id}" class="${state.language === l.id ? 'selected' : ''}" aria-pressed="${state.language === l.id}"><span class="flag ${l.id}" aria-hidden="true">${l.id === 'en' ? '🇺🇸' : '🇳🇴'}</span>${l.name}</button>`).join('')}</div><button class="icon-button mobile-preferences" data-action="settings" aria-label="Preferences">${icon('settings')}</button></div>
   </header><main id="main" tabindex="-1"><div id="storage-warning" class="notice error" role="alert" ${storageOK ? 'hidden' : ''}>Your browser could not save your progress. Export your writing in Preferences before closing this tab.</div><div id="page"></div></main>
   <footer class="page-footer"><span>Find your words. Make them yours.</span><span>${state.language === 'en' ? 'American English' : 'Norwegian Bokmål · Oslo pronunciation'}</span></footer></div>
@@ -114,6 +116,7 @@ function todayPage() {
   const first = d.words.length < 3 ? 'vocabulary' : !d.argument.complete ? 'argument' : !d.story.complete ? 'story' : 'speaking';
   return `${heading(dateLabel().toUpperCase(), 'Find the words.<br class="mobile-break"> Own the conversation.', 'A little more precise. A little more confident. Every day.', `<span class="practice-pill">${icon('clock')}15–20 min for yourself</span>`)}
   <section class="hero"><div class="hero-copy"><div class="hero-eyebrow"><span></span> TODAY’S FOCUS <span class="hero-category">${e(lesson().category)}</span></div><h2>${e(c.title)}</h2><p>${e(c.description)}</p><button class="button primary" data-action="go" data-route="${first}">${done === 4 ? 'Revisit today’s practice' : done ? 'Continue my practice' : 'Start my practice'}${icon('arrow')}</button><div class="hero-meta"><span>${icon('book')}3 useful expressions</span><span>${icon('mic')}Your ideas, out loud</span></div></div>${dailyArt()}</section>
+  ${poemPreview()}
   <div class="section-heading"><div><span class="eyebrow">MAKE IT A DAILY HABIT</span><h2>Your practice, one step at a time</h2></div><span class="subtle">${done} / 4 complete</span></div>
   <section class="activity-grid" aria-label="Today’s activities">
     ${activityCard('vocabulary', 1, 'Find better words', 'Go beyond everyday vocabulary. Learn expressions you’ll actually use.', 3, 'book', 'sage', d.words.length >= 3)}
@@ -122,6 +125,17 @@ function todayPage() {
   </section>
   <section class="speaking-banner"><span class="speaking-icon">${icon('mic')}</span><div><span class="eyebrow">THEN, SAY IT OUT LOUD</span><h3>Give your words a voice.</h3><p>Listen, record, and find your natural rhythm.</p></div><button class="button outline" data-action="go" data-route="speaking">${d.speaking ? 'Practise again' : 'Practise speaking'}${icon('arrow')}</button></section>
   <div class="dashboard-bottom"><section class="week-card"><div class="section-heading small"><h3>A little consistency goes a long way.</h3><span>This week</span></div>${weekStrip()}</section><aside class="tip-card"><span class="tip-symbol">“</span><p>You don’t need bigger words.<br>You need the <em>right</em> ones.</p><span>YOUR DAILY REMINDER</span></aside></div>`;
+}
+function poemPreview() {
+  const poem = dailyPoem();
+  return `<section class="daily-poem-preview" aria-labelledby="daily-poem-heading"><div class="poem-preview-copy"><span class="eyebrow">A CLASSIC, JUST FOR FUN</span><h2 id="daily-poem-heading">${e(poem.title)}</h2><p>${e(poem.author)} · ${e(poem.year)}${poem.excerpt ? ' · An excerpt' : ''}</p></div><blockquote class="poem-preview-lines" lang="${poem.language === 'en' ? 'en' : 'no'}">${poem.lines.filter(Boolean).slice(0, 2).map(line => `<span>${e(line)}</span>`).join('')}</blockquote><button class="button outline" data-action="go" data-route="poem">Read today’s poem${icon('arrow')}</button></section>`;
+}
+function poemPage() {
+  const poem = dailyPoem();
+  const stanzas = poem.lines.join('\n').split(/\n\s*\n/);
+  return `${heading('A MOMENT FOR THE JOY OF WORDS', 'A poem for today.', 'A short classic to enjoy, reflect on, and read aloud. A new selection each day.')}
+  <div class="poem-reading-layout"><article class="poem-reading-card" aria-labelledby="poem-title"><span class="tag">${poem.language === 'en' ? 'English classic' : 'Norwegian classic'}${poem.excerpt ? ' · Excerpt' : ''}</span><h2 id="poem-title">${e(poem.title)}</h2><p class="poem-byline">${e(poem.author)} (${e(poem.authorDates)}) · ${e(poem.year)}</p><div class="poem-text" lang="${poem.language === 'en' ? 'en' : 'no'}">${stanzas.map(stanza => `<p>${stanza.split('\n').map(line => `<span>${e(line)}</span>`).join('')}</p>`).join('')}</div><div class="poem-reading-actions"><button class="button primary" data-action="listen-poem">${icon('sound')}Listen to the poem</button><button class="button outline" data-action="practise-poem">${icon('mic')}Read it aloud myself</button></div><p id="speech-notice" class="helper-text" role="status">Listening uses a voice available on your device. You can also enjoy reading silently.</p><p class="poem-credit">Public-domain text${poem.excerpt ? ', excerpted from the original' : ''}. Source: <a href="${e(poem.source.url)}" target="_blank" rel="noopener noreferrer">${e(poem.source.label)}</a>.</p></article>
+  <aside class="poem-reading-notes"><section class="support-card poem-context"><span class="eyebrow">A LITTLE CONTEXT</span><h3>Read for pleasure.</h3><p>${e(poem.context)}</p></section><section class="support-card"><span class="eyebrow">SOMETHING TO THINK ABOUT</span><h3>${e(poem.readingPrompt)}</h3><p class="support-note">There is no test or right answer. Notice what the words bring to mind.</p></section><section class="support-card"><span class="eyebrow">A FEW WORDS TO EXPLORE</span><dl class="poem-glossary">${poem.glossary.map(word => `<dt>${e(word.term)}</dt><dd>${e(word.meaning)}</dd>`).join('')}</dl></section><button class="text-button" data-action="go" data-route="today">${icon('arrow')}Back to today’s practice</button></aside></div>`;
 }
 function weekDates() {
   const base = new Date(`${today}T12:00:00Z`);
@@ -165,13 +179,15 @@ function feedbackHTML(f) {
   return `<section class="feedback-card"><span class="eyebrow">${f.source === 'ai' ? 'AI WRITING FEEDBACK' : 'YOUR GUIDED WRITING CHECK'}</span><h2>${e(f.summary)}</h2>${[['What’s working', f.strengths], ['Try this next', f.suggestions], ['Think a little deeper', f.questions]].map(([label, items]) => items?.length ? `<h3>${label}</h3><ul>${items.map(item => `<li>${e(item)}</li>`).join('')}</ul>` : '').join('')}<p class="helper-text">${f.source === 'guided' ? 'These are rule-based prompts for revision, not a grammar or meaning assessment.' : 'AI can misunderstand your intention. Keep the suggestions that express what you mean.'}</p></section>`;
 }
 function selectedSpeechText() {
+  if (speakingSource === 'poem') return dailyPoem().lines.join('\n');
   return speakingSource === 'model' ? content().speaking.text : day()[speakingSource]?.text || content().speaking.text;
 }
 function speakingPage() {
   const text = selectedSpeechText();
+  const poemFocus = ['Pause gently at punctuation and between stanzas.', 'Choose one line and let its most meaningful word stand out.', 'Read for rhythm and enjoyment. Older spelling may differ from the language you practise in daily lessons.'];
   return `${heading('YOUR IDEAS, OUT LOUD', 'Find your natural rhythm.', 'Listen closely. Say it your way. Listen back and try again.')}
-  <div class="speaking-layout"><section class="speech-card"><div class="speech-card-header"><span class="tag">${state.language === 'en' ? 'American English' : 'Oslo pronunciation focus'}</span><label class="sr-only" for="speech-source">Text to practise</label><select id="speech-source"><option value="model" ${speakingSource === 'model' ? 'selected' : ''}>Today’s practice passage</option>${['argument', 'story'].filter(k => day()[k].text.trim()).map(k => `<option value="${k}" ${speakingSource === k ? 'selected' : ''}>My ${k}</option>`).join('')}</select></div><p class="speech-passage" lang="${state.language === 'en' ? 'en-US' : 'nb-NO'}">${e(text)}</p><div class="speech-controls"><button class="button primary" data-action="listen">${icon('sound')}Listen to the passage</button><label class="speed-label" for="speech-speed">Speed<select id="speech-speed"><option value="0.8">Slow</option><option value="0.95" selected>Natural</option></select></label></div><p id="speech-notice" class="helper-text" role="status">${e(speechNotice || 'Playback uses a voice available on your device. Choose one in Preferences.')}</p><p class="helper-text">${state.language === 'no' ? 'A Norwegian device voice is not guaranteed to use an Oslo dialect. Use the Oslo-focused practice notes alongside it.' : 'An en-US device voice is preferred when available. Voice availability depends on your browser and operating system.'}</p></section>
-  <aside class="support-card pronunciation-card"><span class="support-icon">${icon('sound')}</span><h3>Give these a little attention</h3><ul class="focus-list">${content().speaking.focus.map(f => `<li>${icon('check')}<span>${e(f)}</span></li>`).join('')}</ul><p class="support-note">Aim for clear and comfortable. You don’t need to erase your own accent.</p></aside></div>
+  <div class="speaking-layout"><section class="speech-card"><div class="speech-card-header"><span class="tag">${speakingSource === 'poem' ? 'Poetry · read for rhythm' : state.language === 'en' ? 'American English' : 'Oslo pronunciation focus'}</span><label class="sr-only" for="speech-source">Text to practise</label><select id="speech-source"><option value="model" ${speakingSource === 'model' ? 'selected' : ''}>Today’s practice passage</option><option value="poem" ${speakingSource === 'poem' ? 'selected' : ''}>Today’s poem</option>${['argument', 'story'].filter(k => day()[k].text.trim()).map(k => `<option value="${k}" ${speakingSource === k ? 'selected' : ''}>My ${k}</option>`).join('')}</select></div><p class="speech-passage" lang="${state.language === 'en' ? 'en-US' : 'nb-NO'}">${e(text)}</p><div class="speech-controls"><button class="button primary" data-action="listen">${icon('sound')}Listen to the passage</button><label class="speed-label" for="speech-speed">Speed<select id="speech-speed"><option value="0.8">Slow</option><option value="0.95" selected>Natural</option></select></label></div><p id="speech-notice" class="helper-text" role="status">${e(speechNotice || 'Playback uses a voice available on your device. Choose one in Preferences.')}</p><p class="helper-text">${state.language === 'no' ? 'A Norwegian device voice is not guaranteed to use an Oslo dialect. Use the Oslo-focused practice notes alongside it.' : 'An en-US device voice is preferred when available. Voice availability depends on your browser and operating system.'}</p></section>
+  <aside class="support-card pronunciation-card"><span class="support-icon">${icon('sound')}</span><h3>Give these a little attention</h3><ul class="focus-list">${(speakingSource === 'poem' ? poemFocus : content().speaking.focus).map(f => `<li>${icon('check')}<span>${e(f)}</span></li>`).join('')}</ul><p class="support-note">Aim for clear and comfortable. You don’t need to erase your own accent.</p></aside></div>
   <section class="recorder-card"><div class="recording-heading"><div><span class="eyebrow">LISTEN TO YOURSELF</span><h2>Your turn to say it.</h2><p>Record the passage or explain the idea in your own words.</p></div><span class="privacy-badge">Saved only on this device</span></div><div class="recording-controls"><button class="record-button" id="record-button" data-action="record">${icon('mic')}Start recording</button><span id="recording-time" role="timer">0:00</span><span id="recording-status" role="status">Your microphone stays off until you start.</span></div><div id="recording-playback"></div><p class="helper-text">Listen for the sounds and rhythm in today’s notes. This version does not score pronunciation or assess your accent. Microphone access requires HTTPS or localhost.</p><button class="button outline" data-action="complete-speaking">${icon(day().speaking ? 'check' : 'arrow')}${day().speaking ? 'Speaking practice completed' : 'I’ve listened and practised'}</button></section>`;
 }
 function progressPage() {
@@ -187,10 +203,10 @@ function progressPage() {
 function render() {
   recordingLoadGeneration++;
   if (recordingUrl) { URL.revokeObjectURL(recordingUrl); recordingUrl = null; }
-  if (!['today', 'vocabulary', 'argument', 'story', 'speaking', 'progress'].includes(route)) route = 'today';
+  if (!['today', 'vocabulary', 'argument', 'story', 'speaking', 'progress', 'poem'].includes(route)) route = 'today';
   app.innerHTML = shell();
-  document.querySelector('#page').innerHTML = ({ today: todayPage, vocabulary: vocabularyPage, argument: writingPage, story: writingPage, speaking: speakingPage, progress: progressPage })[route]();
-  document.title = `${({ today: 'Today’s practice', vocabulary: 'My vocabulary', argument: 'Make your point', story: 'Tell your story', speaking: 'Speaking practice', progress: 'My progress' })[route]} — Mellom`;
+  document.querySelector('#page').innerHTML = ({ today: todayPage, vocabulary: vocabularyPage, argument: writingPage, story: writingPage, speaking: speakingPage, progress: progressPage, poem: poemPage })[route]();
+  document.title = `${({ today: 'Today’s practice', vocabulary: 'My vocabulary', argument: 'Make your point', story: 'Tell your story', speaking: 'Speaking practice', progress: 'My progress', poem: 'Daily poem' })[route]} — Mellom`;
   if (route === 'speaking') { updateRecordingControls(); loadRecording(); }
 }
 function openPreferences() {
@@ -403,6 +419,8 @@ app.addEventListener('click', async event => {
     day()[route].complete = true; persist(); render(); announce('Writing practice completed. Your draft is saved.');
   }
   if (action === 'listen') speak(selectedSpeechText());
+  if (action === 'listen-poem') speak(dailyPoem().lines.join('\n'));
+  if (action === 'practise-poem') { speakingSource = 'poem'; go('speaking'); }
   if (action === 'record') await toggleRecording();
   if (action === 'delete-recording') { await recordingStore('delete', dayKey()); await loadRecording(); announce('Recording deleted.'); }
   if (action === 'complete-speaking') { if (recordingSession) { announce('Finish recording and let it save before completing the exercise.'); return; } day().speaking = true; persist(); render(); announce('Speaking practice marked complete.'); }
